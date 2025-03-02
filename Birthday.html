@@ -23,7 +23,7 @@
             max-width: 100vw;
             background:#FFEEFF;
             background-size: cover;
-            overflow: hidden;
+            overflow:hidden;
             color: #333;
         }
 @keyframes draw {
@@ -45,7 +45,7 @@
     width: 100%;
     max-width: 100vw;
     height: 300px;
-    margin: 0;
+    margin-top: 2vh;
     padding: 0;
     transform: scale(1.25);
     z-index: 0; /* Ensures it's behind everything */
@@ -84,7 +84,7 @@ bottom-line
     padding: 50px 50px 50px 50px; /* Adjusted padding to give space around */
     min-height: 100vh;
   flex-direction: column;
-    mix-blend-mode: ;
+    mix-blend-mode:;
     border-radius: 10px;
     max-width: 100%;
     width: 100%;
@@ -97,7 +97,7 @@ bottom-line
 
 h1 {
     font-size: 2.5em;
-    color: #ff66b2;
+    color: #FF66B2;
     margin-top: 0px;
     margin-bottom: 30px; /* Adjust space below the heading */
     animation: bounceIn 2s ease-in-out;
@@ -119,24 +119,24 @@ h1 {
 }
 
 .message {
-    margin-top: 50px; /* Adjust the space between the message and button */
+    margin-top: 40px; /* Adjust the space between the message and button */
     margin-bottom: 20px;
     font-size: 1.2em;
-    color: #444;
+    color: black;
     font-style: italic;
 }
 
 .thank-you-btn {
   font-family: Arial , Sans-Serif;
-    background-color: #ff66b2;
-    color: white;
-    padding: 10px 20px;
+    background-color: #FF66B2;
+    color:white;
+    padding: 12px 20px;
     border: none;
     border-radius: 50px;
     font-size: 1.2em;
     cursor: pointer;
     transition: background-color 0.3s ease;
-    margin-top: 50px;
+    margin-top: 20px;
 }
 
 .thank-you-btn:hover {
@@ -184,12 +184,22 @@ h1 {
     50% { transform: translate(-50%, -10px); } /* Moves up slightly */
     100% { transform: translate(-50%, 0); } /* Comes back down */
 }
+@keyframes revealKite {
+    0% {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
 
 #balloon {
   position: absolute;
   left: 20vw;
   right: 0px;
-    animation: floatBalloon 2s ease-in-out infinite;
+    animation: floatBalloon 5s ease-in-out infinite;
 }
         /* Random positioning and color for the confetti particles */
         .confetti span:nth-child(1) { left: 5%; background-color: #FFa7d2; animation-duration: 4s; }
@@ -213,6 +223,7 @@ h1 {
         .confetti span:nth-child(19) { left: 95%; background-color: #FF9A8B; animation-duration: 6s; }
         .confetti span:nth-child(20) { left: 100%; background-color: #FFDB58; animation-duration: 7s; }
         /* Add more particles as needed */
+        
     </style>
 </head>
 <body>
@@ -231,11 +242,17 @@ h1 {
 </div>
 
   <div class="container">
-        <h1>Happy <br>Birthday, Abhishikta!</h1>
-        <p class="message">Wishing you all the best today and always</p>
-        <button class="thank-you-btn" onclick="redirectToWhatsApp()">click to claim a brownie</button>
+        <h1>Happy <br>Birthday, Arkaprava!</h1>
+        <p class="message">Deseándote todo lo mejor hoy y siempre</p>
+        <button class="thank-you-btn" onclick="redirectToWhatsApp()"style="font-weight:bold">click  to  claim a lollapalooza ticket </button>
     </div>
 
+<body>
+    <div id="kite-container" style="position: absolute; top: 15vh; right: 4vh; opacity: 0; transform: translateX(20vh);">
+        <span id="kite-text" style="font-size: 40px; font-family: Cookie, Arial; color: #FF66B2;">Joseph</span>
+    </div>
+
+    </body>
 <div>
     <svg width="500" height="100" viewBox="0 0 500 100"
          xmlns="http://www.w3.org/2000/svg"
@@ -251,21 +268,25 @@ h1 {
         </path>
     </svg>
 </div>
+
+
 <svg id="balloon" width="100" height="100" 
      style="position: absolute; left: 50%; top: 200px; transform: translateX(-50%); z-index: 15;">
-  <text id="num19" x="10" y="50" font-size="50" font-family="Cookie, Arial" fill=#ff66b2 stroke=#FFEEFF stroke-width=1px  opacity="1" >19</text>
-    <text id="num20" x="10" y="50" font-size="50" font-family="Cookie, Arial" fill=#ff66b2  stroke=#FFEEFF stroke-width=1px stroke-width=1px style="opacity: 0; transform: scale(0.5); text-shadow: 0px 0px 10px #FFEEFF;">20
+  <text id="num18" x="10" y="50" font-size="50" font-family="Cookie, Arial" fill=#ff66b2 stroke=#FFEEFF stroke-width=1px  opacity="1" >18</text>
+    <text id="num19" x="10" y="50" font-size="60" font-family="Cookie, Arial"  fill=#ff66b2  stroke=#FFEEFF stroke-width=0.5px style="opacity: 0; transform: scale(0.5); text-shadow: 0px 0px 10px #FFEEFF;">19
     </text>
         
         
   <defs>
     <filter id="lightShadow">
-        <feDropShadow dx="0.5" dy="0.5" stdDeviation="0.3" flood-color="black" flood-opacity="0.15"/>
+        <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#FFEEFF" flood-opacity="50"/>
     </filter>
 </defs>
     <text id="morphText" x="10" y="50" font-size="50" font-family=cookie , Arial;
     
-    fill=#ff66b2 filter="url(#lightShadow)">19</text>
+    fill=#ff66b2 filter="url(#lightShadow)">18</text>
+   
+
 </svg>
     <!-- Confetti Container -->
     <div class="confetti" id="confetti">
@@ -294,7 +315,7 @@ h1 {
 
     <script>
         function redirectToWhatsApp() {
-            const message = encodeURIComponent("Thank You 🧁                         Boni toke biryani khawabo 😁");
+            const message = encodeURIComponent("Thank you 🎂                  I'll give you an apple 🍎  party 😁");
             const phoneNumber = "919800863595"; // Your phone number in international format
             const url = `https://wa.me/${phoneNumber}?text=${message}`;
             window.location.href = url;
@@ -327,13 +348,13 @@ function moveBalloonSmoothly() {
 window.onload = moveBalloonSmoothly;
 
 function changeYear() {
+    let num18 = document.getElementById("num18");
     let num19 = document.getElementById("num19");
-    let num20 = document.getElementById("num20");
     let morphText = document.getElementById("morphText");
 
     // Fade out "19" and morphText
     num19.style.transition = "opacity 0.5s, transform 0.5s";
-    num19.style.opacity = "0";
+    num18.style.opacity = "0";
     num19.style.transform = "scale(0.5)";
 
     morphText.style.transition = "opacity 0.5s, transform 0.5s";
@@ -341,18 +362,20 @@ function changeYear() {
     morphText.style.transform = "scale(0.5)";
 
     setTimeout(() => {
-        num20.style.display = "block";
-        num20.style.opacity = "0";
+        num19.style.display = "block";
+        num19.style.opacity = "0";
 
         setTimeout(() => {
-            num20.style.transition = "opacity 0.5s, transform 0.5s";
-            num20.style.opacity = "1";
-            num20.style.transform = "scale(1)";
+            num19.style.transition = "opacity 0.5s, transform 0.5s";
+            num19.style.opacity = "1";
+            num19.style.transform = "scale(1)";
 
             // Remove both elements *after* "20" is fully visible
             setTimeout(() => {
-                num19.remove();
+                num18.remove();
                 morphText.remove();
+              let kiteContainer = document.getElementById("kite-container");
+            kiteContainer.style.animation = "revealKite 1s ease-out forwards";  
             }, 500); // Add a small delay after 20 finishes fade in.
         }, 100);
     }, 500);
