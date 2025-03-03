@@ -117,7 +117,16 @@ h1 {
         transform: scale(1);
     }
 }
-
+#music-note {
+    position: absolute; /* Required for movement */
+    font-size: 60px;
+    font-family: Arial, sans-serif;
+    color: #ff66b2; 
+    font-weight: normal;
+    user-select: none;
+    -webkit-text-stroke: 0.5px #6b366b; /* Dark purple stroke */
+    text-stroke: 0.5px #6b366b;/* Prevents selection */
+}
 .message {
     margin-top: 40px; /* Adjust the space between the message and button */
     margin-bottom: 20px;
@@ -194,7 +203,20 @@ h1 {
         transform: translateX(0);
     }
 }
+@keyframes wiggle {
+    0% { transform: rotate(0deg) scale(1); }
+    15% { transform: rotate(-20deg) scale(1.1); }
+    30% { transform: rotate(20deg) scale(1.1); }
+    45% { transform: rotate(-15deg) scale(1.05); }
+    60% { transform: rotate(15deg) scale(1.05); }
+    75% { transform: rotate(-10deg) scale(1); }
+    90% { transform: rotate(10deg) scale(1); }
+    100% { transform: rotate(0deg) scale(1); }
+}
 
+.wiggle {
+    animation: wiggle 1.2s ease-in-out; /* Increased duration */
+}
 #balloon {
   position: absolute;
   left: 20vw;
@@ -247,6 +269,7 @@ h1 {
         <button class="thank-you-btn" onclick="redirectToWhatsApp()"style="font-weight:bold">click  to  claim a lollapalooza ticket </button>
     </div>
 
+<div id="music-note">♪</div>
 <body>
     <div id="kite-container" style="position: absolute; top: 15vh; right: 4vh; opacity: 0; transform: translateX(20vh);">
         <span id="kite-text" style="font-size: 40px; font-family: Cookie, Arial; color: #FF66B2;">Joseph</span>
@@ -315,7 +338,7 @@ h1 {
 
     <script>
         function redirectToWhatsApp() {
-            const message = encodeURIComponent("Thank you 🤝                  I'll give you an apple 🍎  party 😁");
+            const message = encodeURIComponent("Thank you 🤝                I'll give you a treat 😁");
             const phoneNumber = "919800863595"; // Your phone number in international format
             const url = `https://wa.me/${phoneNumber}?text=${message}`;
             window.location.href = url;
@@ -380,8 +403,111 @@ function changeYear() {
         }, 100);
     }, 500);
 }
-
 setTimeout(changeYear, 2000);
+document.addEventListener("DOMContentLoaded", function () {
+    let note = document.getElementById("music-note");
+    let speedX = 3; // Horizontal speed
+    let speedY = 3; // Vertical speed
+
+    // **Manually set movement boundaries**
+let minX = 1; // Left boundary 
+let maxX = window.innerWidth - 120; //Right boundary 
+let minY = -20; // Top boundary 
+let maxY = window.innerHeight - 250; // Bottom boundary // 80vh (stops at 80% of height) // Bottom boundary
+
+    // **Start position within boundaries**
+    let posX = Math.random() * (maxX - minX) + minX;
+    let posY = Math.random() * (maxY - minY) + minY;
+
+    function getRandomColor() {
+        let r = Math.floor(200 + Math.random() * 55);
+        let g = Math.floor(200 + Math.random() * 55);
+        let b = Math.floor(200 + Math.random() * 55);
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    function flashBackground() {
+        let originalColor = "#FFEEFF";
+        document.body.style.backgroundColor = getRandomColor();
+        setTimeout(() => {
+            document.body.style.backgroundColor = originalColor;
+        }, 100);
+    }
+
+function changeNoteColor() {
+    let note = document.getElementById("music-note");
+
+    // **Color palette that looks good with #FFEEFF**
+    let colors = [
+        "#CDB4DB",
+        "#FF66B2",// Lavender
+        "#A2D2FF", // Soft Blue
+        "#B5EAD7", // Mint Green
+        "#FFDAC1", // Peach
+        "#FF6F61", // Bright Coral
+        "#FFD700", // Golden Yellow
+        "#008080"  // Teal
+    ];
+
+    // **Pick a random color from the array**
+    let randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+    note.style.color = randomColor; // Apply the new color
+
+    // **Trigger the wiggle effect**
+    note.classList.add("wiggle");
+
+    // **Remove the class after animation ends**
+    setTimeout(() => {
+        note.classList.remove("wiggle");
+    }, 1200); // Matches animation duration
+// Change note color
+
+    // Apply a "wiggle" effect by rotating the note
+    note.style.transition = "transform 0.2s ease-in-out";
+    note.style.transform = "rotate(-20deg)";
+
+    // Reset back to normal after the wiggle
+    setTimeout(() => {
+        note.style.transform = "rotate(20deg)";
+    }, 100);
+    
+    setTimeout(() => {
+        note.style.transform = "rotate(0deg)";
+    }, 200);
+}
+
+function updatePosition() {
+    posX += speedX;
+    posY += speedY;
+
+    let hitEdge = false;
+
+    // **Ensure note stays inside boundaries**
+    if (posX >= maxX || posX <= minX) {
+        speedX = -speedX;  // Reverse direction
+        hitEdge = true;
+    }
+    if (posY >= maxY || posY <= minY) {
+        speedY = -speedY;  // Reverse direction
+        hitEdge = true;
+    }
+
+    // **Trigger effects if it hits an edge**
+    if (hitEdge) {
+        changeNoteColor();
+        flashBackground();
+    }
+
+    // **Apply new position**
+    note.style.left = `${posX}px`;
+    note.style.top = `${posY}px`;
+
+    requestAnimationFrame(updatePosition);
+}
+
+    updatePosition();
+});
     </script>
 
 </body>
