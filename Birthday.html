@@ -68,25 +68,37 @@
             height: 18px;
             background: rgba(255,255,255,0.6);
         }
-        .b-zero { animation: floatSlightly 3s ease-in-out infinite, zeroFlyAway 3s ease-in forwards 6s; }
-        .b-one-mover {
+
+        /* 19 → 20 transition — all balloons same color (#ff6b81), same float phase */
+        .b-one-away  { animation: floatSlightly 3s ease-in-out 0s infinite, oneAway  2.5s ease-in forwards 6s; }
+        .b-nine-away { animation: floatSlightly 3s ease-in-out 0s infinite, nineAway 2.5s ease-in forwards 6s; }
+        .b-newpair {
             position: absolute;
             right: 0;
+            display: flex;
+            gap: 12px;
             opacity: 0;
             transform: translateY(200px);
-            animation: oneEnter 2s ease-out forwards 6s;
+            animation: newPairEnter 2s ease-out forwards 6s;
         }
-        .b-one { background-color: #ff4757; animation: floatSlightly 3s ease-in-out -3s infinite; }
+        .b-two-new  { background-color: #ff6b81; animation: floatSlightly 3s ease-in-out 0s infinite; }
+        .b-zero-new { background-color: #ff6b81; animation: floatSlightly 3s ease-in-out 0s infinite; }
+
         @keyframes riseUp {
-            0% { transform: translateY(10vh); opacity: 0; }
-            100% { transform: translateY(-75vh); opacity: 1; } 
+            0%   { transform: translateY(10vh);  opacity: 0; }
+            100% { transform: translateY(-75vh); opacity: 1; }
         }
         @keyframes floatSlightly {
             0%, 100% { transform: translateY(0) rotate(-3deg); }
-            50% { transform: translateY(-12px) rotate(3deg); }
+            50%      { transform: translateY(-12px) rotate(3deg); }
         }
-        @keyframes zeroFlyAway { to { transform: translateY(-400px); opacity: 0; } }
-        @keyframes oneEnter { 0% { transform: translateY(100vh); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+        @keyframes oneAway  { to { transform: translateX(0px) translateY(-480px) rotate(-7deg); opacity: 0; } }
+        @keyframes nineAway { to { transform: translateY(-480px) rotate(14deg); opacity: 0; } }
+        @keyframes newPairEnter {
+            0%   { transform: translateY(100vh); opacity: 0; }
+            100% { transform: translateY(0);     opacity: 1; }
+        }
+
         .svg-container { width: 100%; height: auto; overflow: visible; }
         .broken-line { fill: none; stroke: rgba(255, 255, 255, 0.6); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 20, 20; animation: flowLine 3s linear infinite; }
         @keyframes flowLine { from { stroke-dashoffset: 400; } to { stroke-dashoffset: 0; } }
@@ -110,24 +122,19 @@
         @keyframes fadeIn { to { opacity: 1; } }
         .btn { background: #ff6b81; color: white; border: none; padding: 15px 40px; border-radius: 50px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 25px; transition: 0.3s; position: relative; }
         .btn:hover { transform: scale(1.05); background: #ff4757; }
-        .surprise-text { position: absolute; width: 100%; left: 0; top: 100%; padding-top: 8px; font-size: 0.9rem; font-weight: normal; opacity: 0; transition: opacity 0.5s ease; pointer-events: none;
-        color:white;
-          
-        }
+        .surprise-text { position: absolute; width: 100%; left: 0; top: 100%; padding-top: 8px; font-size: 0.9rem; font-weight: normal; opacity: 0; transition: opacity 0.5s ease; pointer-events: none; color: white; }
         .surprise-text.visible { opacity: 1; }
 
         /* =============================================
            ADDED — ORIGINAL UNTOUCHED ABOVE
         ============================================= */
-.space-bg {
+        .space-bg {
             position: fixed;
             inset: 0;
             background: linear-gradient(160deg, #0a0e2a 0%, #0d1b3e 30%, #0a1628 55%, #0e0b24 75%, #1a0a2e 100%);
             z-index: 0;
             pointer-events: none;
         }
-
-        /* Center depth vignette */
         .center-glow {
             position: fixed;
             inset: 0;
@@ -135,15 +142,12 @@
             z-index: 1;
             pointer-events: none;
         }
-
-        /* Solar system canvas */
         #solarCanvas {
             position: fixed;
             inset: 0;
             pointer-events: none;
             z-index: 1;
         }
-              /* Stardust */
         .stardust-field { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
         .sd {
             position: absolute;
@@ -156,7 +160,6 @@
             0%,100% { opacity: 0; transform: scale(0.4); }
             50%      { opacity: var(--sdop); transform: scale(1); }
         }
-        /* Ribbon banner */
         .ribbon-banner {
             position: fixed;
             top: 0; left: 0;
@@ -172,7 +175,6 @@
             padding-top: 8px;
         }
         .ribbon-flag {
-            /* Wide enough to look like bunting, not too tall */
             width: 30px;
             height: 42px;
             flex-shrink: 0;
@@ -184,8 +186,6 @@
             0%, 100% { transform: rotate(-2deg); }
             50%       { transform: rotate(2deg) scaleY(1.03); }
         }
-
-        /* DNA — drawn on a canvas so overflow:hidden can't clip it */
         #dnaCanvas {
             position: fixed;
             bottom: 0;
@@ -195,31 +195,27 @@
             opacity: 0;
             animation: fadeIn 1s ease forwards 5.5s;
         }
-
     </style>
 </head>
 <body>
 
-    <!-- ADDED: ribbon banner (flags injected by JS) -->
     <div class="ribbon-banner" id="ribbonBanner"></div>
-
-    <!-- ADDED: DNA canvas (drawn by JS, bypasses overflow:hidden) -->
     <canvas id="dnaCanvas"></canvas>
     <div class="space-bg"></div>
     <div class="center-glow"></div>
-
-    <!-- Solar canvas -->
     <canvas id="solarCanvas"></canvas>
-
-    <!-- Stardust -->
     <div class="stardust-field" id="stardustField"></div>
-    <!-- ===== ORIGINAL HTML — UNTOUCHED ===== -->
+
+    <!-- ===== ORIGINAL HTML — only balloon section updated ===== -->
     <div class="main-wrapper">
         <div class="balloon-corner">
-            <div class="balloon b-two">2</div>
-            <div class="balloon b-zero">0</div>
-            <div class="b-one-mover">
-                <div class="balloon b-one">1</div>
+            <!-- 1 and 9 fly away at t=6s -->
+            <div class="balloon b-one-away">1</div>
+            <div class="balloon b-nine-away">9</div>
+            <!-- 2 and 0 rise together at t=6s -->
+            <div class="b-newpair">
+                <div class="balloon b-two-new">2</div>
+                <div class="balloon b-zero-new">0</div>
             </div>
         </div>
 
@@ -240,7 +236,7 @@
             </svg>
 
             <div class="message-box">
-                <p class="name-text">Abhishikta</p>
+                <p class="name-text">Arkaprava</p>
                 <div style="position: relative; display: inline-block;">
                     <button class="btn" id="magicBtn" onclick="celebrate()">Do not click</button>
                     <div class="surprise-text" id="surprise">(just kidding, do it!)</div>
@@ -258,16 +254,11 @@
 
         function celebrate() {
             confetti({ particleCount: 200, spread: 100, origin: { y: 0.7 }, colors: ['#ff6b81', '#ffffff', '#ffd700'] });
-            
-
-    // Open WhatsApp after 1.5 seconds
-    setTimeout(() => {
-        const phoneNumber = "919800863595"; // Format: CountryCode + Number (e.g., 919876543210)
-        const message = encodeURIComponent("Thank you soo much bhai 😁                                       toke large margherita pizza🍕 khawabo");
-        window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
-    }, 1500);
-
-            
+            setTimeout(() => {
+                const phoneNumber = "919800863595";
+                const message = encodeURIComponent("Thank you so much 😁                                Lets have a pizza🍕 party");
+                window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+            }, 1500);
         }
 
         // ===== ADDED JS =====
@@ -275,7 +266,6 @@
         // --- Ribbon flags ---
         const rb = document.getElementById('ribbonBanner');
         const rbColors = ['#ff6b81','#ffd700','#a29bfe','#74b9ff','#55efc4','#fd79a8','#fdcb6e','#6c5ce7'];
-        // Each flag is 30px wide; fill the screen width exactly
         const flagCount = Math.ceil(window.innerWidth / 30) + 1;
         for (let i = 0; i < flagCount; i++) {
             const f = document.createElement('div');
@@ -285,89 +275,50 @@
         }
 
         // --- DNA on canvas ---
-        // Canvas covers bottom-left quadrant; tilt is applied via ctx.rotate
         const dnaCanvas = document.getElementById('dnaCanvas');
         const W = Math.round(window.innerWidth * 0.45);
         const H = Math.round(window.innerHeight * 0.65);
         dnaCanvas.width  = W;
         dnaCanvas.height = H;
-
         const dc = dnaCanvas.getContext('2d');
-
-        // Helix parameters
-        const TILT    = -40 * Math.PI / 180;   // rotate canvas ~28° anticlockwise
-        const AMP     = 38;    // horizontal amplitude of each strand
-        const PERIOD  = 90;    // pixels per full sine cycle
-        const LENGTH  = 580;   // total length along the helix axis
-        const CX      = 160;    // centre-x of the helix in local space
-        let   phase   = 0;     // scrolling phase
+        const TILT   = -40 * Math.PI / 180;
+        const AMP    = 38, PERIOD = 90, LENGTH = 580, CX = 160;
+        let phase = 0;
 
         function drawDNA() {
             dc.clearRect(0, 0, W, H);
             dc.save();
-
-            // Anchor to bottom-left of canvas, then tilt
-            dc.translate(0, H+100);
+            dc.translate(0, H + 100);
             dc.rotate(TILT);
-
             const steps = 300;
-
-            // ---- Strand 1 (blue) ----
             dc.beginPath();
             for (let i = 0; i <= steps; i++) {
-                const t  = i / steps;
-                const y  = -t * LENGTH;                          // goes upward
-                const x  = CX + AMP * Math.sin(2 * Math.PI * t * (LENGTH / PERIOD) + phase);
-                i === 0 ? dc.moveTo(x, y) : dc.lineTo(x, y);
+                const t = i/steps, y = -t*LENGTH, x = CX + AMP * Math.sin(2*Math.PI*t*(LENGTH/PERIOD)+phase);
+                i===0 ? dc.moveTo(x,y) : dc.lineTo(x,y);
             }
-            dc.strokeStyle = 'rgba(100, 190, 255, 0.72)';
-            dc.lineWidth   = 3;
-            dc.lineCap     = 'round';
-            dc.lineJoin    = 'round';
-            dc.setLineDash([12, 7]);
-            dc.stroke();
-
-            // ---- Strand 2 (pink) ----
+            dc.strokeStyle='rgba(100,190,255,0.72)'; dc.lineWidth=3; dc.lineCap='round'; dc.lineJoin='round'; dc.setLineDash([12,7]); dc.stroke();
             dc.beginPath();
             for (let i = 0; i <= steps; i++) {
-                const t  = i / steps;
-                const y  = -t * LENGTH;
-                const x  = CX - AMP * Math.sin(2 * Math.PI * t * (LENGTH / PERIOD) + phase);
-                i === 0 ? dc.moveTo(x, y) : dc.lineTo(x, y);
+                const t = i/steps, y = -t*LENGTH, x = CX - AMP * Math.sin(2*Math.PI*t*(LENGTH/PERIOD)+phase);
+                i===0 ? dc.moveTo(x,y) : dc.lineTo(x,y);
             }
-            dc.strokeStyle = 'rgba(255, 107, 129, 0.72)';
-            dc.lineWidth   = 3;
-            dc.setLineDash([12, 7]);
-            dc.stroke();
-
-            // ---- Rungs ----
-            dc.setLineDash([]);
-            dc.lineWidth = 1.8;
-            const rungSpacing = PERIOD / 2;
-            const numRungs    = Math.floor(LENGTH / rungSpacing);
-            for (let r = 0; r < numRungs; r++) {
-                const t   = (r * rungSpacing) / LENGTH;
-                const y   = -t * LENGTH;
-                const x1  = CX + AMP * Math.sin(2 * Math.PI * t * (LENGTH / PERIOD) + phase);
-                const x2  = CX - AMP * Math.sin(2 * Math.PI * t * (LENGTH / PERIOD) + phase);
-                // Fade rungs based on position
-                const fade = 0.2 + 0.55 * Math.abs(Math.sin(phase * 0.5 + r * 0.4));
-                dc.strokeStyle = `rgba(255,255,255,${fade})`;
-                dc.beginPath();
-                dc.moveTo(x1, y);
-                dc.lineTo(x2, y);
-                dc.stroke();
+            dc.strokeStyle='rgba(255,107,129,0.72)'; dc.lineWidth=3; dc.setLineDash([12,7]); dc.stroke();
+            dc.setLineDash([]); dc.lineWidth=1.8;
+            const rs=PERIOD/2, nr=Math.floor(LENGTH/rs);
+            for (let r=0; r<nr; r++) {
+                const t=(r*rs)/LENGTH, y=-t*LENGTH;
+                const x1=CX+AMP*Math.sin(2*Math.PI*t*(LENGTH/PERIOD)+phase);
+                const x2=CX-AMP*Math.sin(2*Math.PI*t*(LENGTH/PERIOD)+phase);
+                const fade=0.2+0.55*Math.abs(Math.sin(phase*0.5+r*0.4));
+                dc.strokeStyle=`rgba(255,255,255,${fade})`; dc.beginPath(); dc.moveTo(x1,y); dc.lineTo(x2,y); dc.stroke();
             }
-
             dc.restore();
-
-            // Advance scrolling phase slowly
-            phase += 0.018;
+            phase+=0.018;
             requestAnimationFrame(drawDNA);
         }
-
         drawDNA();
-                // --- Stardust ---
+
+        // --- Stardust ---
         const sf = document.getElementById('stardustField');
         for (let i = 0; i < 55; i++) {
             const s = document.createElement('div');
@@ -380,17 +331,11 @@
         // --- Planetary solar system ---
         const canvas = document.getElementById('solarCanvas');
         const ctx    = canvas.getContext('2d');
-
-        function resize() {
-            canvas.width  = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
         resize();
         window.addEventListener('resize', resize);
-
         const getSunX = () => canvas.width  * 0.50;
         const getSunY = () => canvas.height * 0.20;
-
         const planets = [
             { a:55,  b:20,  angle:0.3,  speed:0.013, r:4,   color:'#FFD700', tilt:12  },
             { a:88,  b:32,  angle:1.8,  speed:0.009, r:5.5, color:'#ff9f7f', tilt:-18 },
@@ -398,7 +343,6 @@
             { a:162, b:58,  angle:0.6,  speed:0.004, r:5,   color:'#a29bfe', tilt:-22 },
             { a:200, b:72,  angle:2.1,  speed:0.0025,r:7,   color:'#55efc4', tilt:20  },
         ];
-
         const stars = Array.from({length:80}, () => ({
             x: Math.random(), y: Math.random(),
             r: 0.3 + Math.random() * 1.4,
@@ -406,83 +350,38 @@
             phase: Math.random() * Math.PI * 2,
             speed: 0.015 + Math.random() * 0.035,
         }));
-
         let tick = 0;
-
         function drawSolar() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             tick += 0.016;
-
-            const ox = getSunX();
-            const oy = getSunY();
-
-            // Twinkling stars
+            const ox = getSunX(), oy = getSunY();
             stars.forEach(s => {
                 const a = s.alpha + Math.sin(tick * s.speed + s.phase) * 0.1;
-                ctx.beginPath();
-                ctx.arc(s.x * canvas.width, s.y * canvas.height, s.r, 0, Math.PI*2);
-                ctx.fillStyle = `rgba(255,255,255,${Math.max(0,a)})`;
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(s.x*canvas.width, s.y*canvas.height, s.r, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(255,255,255,${Math.max(0,a)})`; ctx.fill();
             });
-
-            // Orbit rings
             planets.forEach(p => {
-                ctx.save();
-                ctx.translate(ox, oy);
-                ctx.rotate(p.tilt * Math.PI/180);
-                ctx.beginPath();
-                ctx.ellipse(0, 0, p.a, p.b, 0, 0, Math.PI*2);
-                ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-                ctx.lineWidth = 0.8;
-                ctx.stroke();
-                ctx.restore();
+                ctx.save(); ctx.translate(ox, oy); ctx.rotate(p.tilt*Math.PI/180);
+                ctx.beginPath(); ctx.ellipse(0,0,p.a,p.b,0,0,Math.PI*2);
+                ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=0.8; ctx.stroke(); ctx.restore();
             });
-
-            // Sun corona
-            const corona = ctx.createRadialGradient(ox,oy,0, ox,oy,38);
-            corona.addColorStop(0,   'rgba(255,245,120,1)');
-            corona.addColorStop(0.35,'rgba(255,200,60,0.7)');
-            corona.addColorStop(0.7, 'rgba(255,140,0,0.25)');
-            corona.addColorStop(1,   'rgba(255,100,0,0)');
-            ctx.beginPath();
-            ctx.arc(ox, oy, 38, 0, Math.PI*2);
-            ctx.fillStyle = corona;
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(ox, oy, 11, 0, Math.PI*2);
-            ctx.fillStyle = 'rgba(255,250,180,1)';
-            ctx.fill();
-
-            // Planets — NO shadowBlur (removes black shadow)
+            const corona = ctx.createRadialGradient(ox,oy,0,ox,oy,38);
+            corona.addColorStop(0,'rgba(255,245,120,1)'); corona.addColorStop(0.35,'rgba(255,200,60,0.7)');
+            corona.addColorStop(0.7,'rgba(255,140,0,0.25)'); corona.addColorStop(1,'rgba(255,100,0,0)');
+            ctx.beginPath(); ctx.arc(ox,oy,38,0,Math.PI*2); ctx.fillStyle=corona; ctx.fill();
+            ctx.beginPath(); ctx.arc(ox,oy,11,0,Math.PI*2); ctx.fillStyle='rgba(255,250,180,1)'; ctx.fill();
             planets.forEach(p => {
                 p.angle += p.speed;
-                ctx.save();
-                ctx.translate(ox, oy);
-                ctx.rotate(p.tilt * Math.PI/180);
-                const px = Math.cos(p.angle) * p.a;
-                const py = Math.sin(p.angle) * p.b;
-
-                // Soft color glow only — no shadow
-                const grd = ctx.createRadialGradient(px,py,0, px,py, p.r*2.8);
-                grd.addColorStop(0, p.color);
-                grd.addColorStop(1, 'transparent');
-                ctx.beginPath();
-                ctx.arc(px, py, p.r*2.8, 0, Math.PI*2);
-                ctx.fillStyle = grd;
-                ctx.fill();
-
-                // Planet body — clean, no shadow
-                ctx.beginPath();
-                ctx.arc(px, py, p.r, 0, Math.PI*2);
-                ctx.fillStyle = p.color;
-                ctx.fill();
-
+                ctx.save(); ctx.translate(ox,oy); ctx.rotate(p.tilt*Math.PI/180);
+                const px=Math.cos(p.angle)*p.a, py=Math.sin(p.angle)*p.b;
+                const grd=ctx.createRadialGradient(px,py,0,px,py,p.r*2.8);
+                grd.addColorStop(0,p.color); grd.addColorStop(1,'transparent');
+                ctx.beginPath(); ctx.arc(px,py,p.r*2.8,0,Math.PI*2); ctx.fillStyle=grd; ctx.fill();
+                ctx.beginPath(); ctx.arc(px,py,p.r,0,Math.PI*2); ctx.fillStyle=p.color; ctx.fill();
                 ctx.restore();
             });
-
             requestAnimationFrame(drawSolar);
         }
-
         drawSolar();
     </script>
 </body>
