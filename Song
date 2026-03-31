@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Best Song Ever </title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=DM+Serif+Display:ital@1&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: #fff;
+      font-family: 'Roboto', sans-serif;
+      color: #0f0f0f;
+    }
+
+    /* ── YouTube top bar ── */
+    .yt-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      background: #fff;
+      z-index: 50;
+      gap: 6px;
+      animation: fadeDown 0.5s 0.05s ease both;
+    }
+
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Exact YouTube logo mark */
+    .yt-icon { display: flex; align-items: center; }
+
+    .yt-wordmark {
+      font-family: 'Roboto', sans-serif;
+      font-weight: 700;
+      font-size: 1.18rem;
+      color: #0f0f0f;
+      letter-spacing: -0.6px;
+      line-height: 1;
+      margin-left: 4px;
+      /* mimic YouTube's slightly condensed look */
+      font-stretch: condensed;
+    }
+
+    /* ── Lissajous bg ── */
+    #liss-svg {
+      position: fixed;
+      inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Floating children shapes ── */
+    .shapes-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .shape {
+      position: absolute;
+      opacity: 0;
+      animation-fill-mode: both;
+      animation-timing-function: ease-in-out;
+      animation-iteration-count: infinite;
+    }
+
+    /* individual float animations */
+    @keyframes floatA {
+      0%,100% { transform: translateY(0px) rotate(0deg);   opacity: 0.55; }
+      50%      { transform: translateY(-22px) rotate(15deg); opacity: 0.75; }
+    }
+    @keyframes floatB {
+      0%,100% { transform: translateY(0px) rotate(0deg);    opacity: 0.5; }
+      50%      { transform: translateY(-16px) rotate(-12deg); opacity: 0.7; }
+    }
+    @keyframes floatC {
+      0%,100% { transform: translateY(0px) scale(1);     opacity: 0.45; }
+      50%      { transform: translateY(-20px) scale(1.1); opacity: 0.65; }
+    }
+    @keyframes floatD {
+      0%,100% { transform: translateY(0px) rotate(0deg);   opacity: 0.5; }
+      50%      { transform: translateY(-18px) rotate(20deg); opacity: 0.7; }
+    }
+    @keyframes spinFloat {
+      0%   { transform: translateY(0px) rotate(0deg);   opacity: 0.45; }
+      50%  { transform: translateY(-14px) rotate(180deg); opacity: 0.65; }
+      100% { transform: translateY(0px) rotate(360deg);  opacity: 0.45; }
+    }
+
+    /* ── Center card ── */
+    .card {
+      position: fixed;
+      inset: 0;
+      top: -20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6rem;
+      z-index: 10;
+      padding: 2rem 4rem;
+    }
+
+    /* Left content */
+    .left {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      text-align: left;
+    }
+
+    h1 {
+      font-family: 'DM Serif Display', serif;
+      font-style: italic;
+      font-size: clamp(2.8rem, 6vw, 5rem);
+      font-weight: 400;
+      line-height: 0.85;
+      letter-spacing: -0.02em;
+      color: #0f0f0f;
+      opacity: 0;
+      animation: fadeUp 0.7s 0.3s ease both;
+    }
+
+    h1 .red { color: #ff0000;
+    display: block;
+    position: relative;
+    top:20px;}
+
+    .sub {
+      font-size: clamp(0.9rem, 1.6vw, 1.05rem);
+      color: #777;
+      line-height: 1.7;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.5s ease both;
+    }
+
+    /* Calendar */
+    .calendar {
+      width: 152px;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-top: 2rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.06);
+      opacity: 0;
+      animation: fadeUp 0.6s 0.65s ease both;
+    }
+
+    .cal-header {
+      background: #ff0000;
+      color: #fff;
+      text-align: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 8px 0 7px;
+    }
+
+    .cal-body {
+      background: #fff;
+      padding: 8px 8px 10px;
+    }
+
+    .cal-dow {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      font-size: 0.56rem;
+      color: #bbb;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1px;
+      text-align: center;
+    }
+
+    .cal-grid span {
+      font-size: 0.65rem;
+      color: #444;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: auto;
+    }
+
+    .cal-grid span.today {
+      background: #ff0000;
+      color: #fff;
+      font-weight: 700;
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(255,0,0,0.35); }
+      50%      { box-shadow: 0 0 0 5px rgba(255,0,0,0); }
+    }
+
+    .cal-grid span.dim { color: #ddd; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Confetti ── */
+    #confetti {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    @media (max-width: 640px) {
+      .card { flex-direction: column; gap: 1.5rem; padding: 1rem; }
+      .left { align-items: center; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── YouTube bar ── -->
+<div class="yt-bar">
+  <div class="yt-icon">
+    <!-- Rounded YouTube logo (pill shape like the real one) -->
+    <svg width="34" height="24" viewBox="0 0 34 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="34" height="24" rx="7" fill="#FF0000"/>
+      <polygon points="13.5,7.5 13.5,16.5 22.5,12" fill="white"/>
+    </svg>
+  </div>
+  <span class="yt-wordmark">YouTube</span>
+</div>
+
+<!-- ── Lissajous background ── -->
+<svg id="liss-svg" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+  <path id="lissajous" fill="none" stroke="#ffe0e0" stroke-width="1.8" stroke-linecap="round"/>
+</svg>
+
+<!-- ── Floating children shapes ── -->
+<div class="shapes-layer" id="shapes-layer"></div>
+
+<!-- ── Confetti canvas ── -->
+<canvas id="confetti"></canvas>
+
+<!-- ── Main content ── -->
+<div class="card">
+  <div class="left">
+    <h1>Happy<br/><span class="red">April Fool's</span><br/>Day.</h1>
+    <!-- Calendar -->
+    <div class="calendar">
+      <div class="cal-header">April 2026</div>
+      <div class="cal-body">
+        <div class="cal-dow">
+          <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Calendar ──
+(function () {
+  const grid = document.getElementById('cal-grid');
+  // April 2026 starts on Wednesday (index 3, Sun=0)
+  const startDay = 3, days = 30;
+  for (let i = 0; i < startDay; i++) {
+    const s = document.createElement('span');
+    s.className = 'dim';
+    grid.appendChild(s);
+  }
+  for (let d = 1; d <= days; d++) {
+    const s = document.createElement('span');
+    s.textContent = d;
+    if (d === 1) s.className = 'today';
+    grid.appendChild(s);
+  }
+  const filled = startDay + days;
+  const rem = filled % 7 === 0 ? 0 : 7 - (filled % 7);
+  for (let i = 0; i < rem; i++) {
+    const s = document.createElement('span');
+    s.className = 'dim';
+    grid.appendChild(s);
+  }
+})();
+
+// ── Lissajous curve ──
+(function () {
+  const el = document.getElementById('lissajous');
+  const W = 1000, H = 700, STEPS = 600;
+  const a = 3, b = 2, delta = Math.PI / 4;
+  let phase = 0;
+
+  function build(ph) {
+    let d = '';
+    for (let i = 0; i <= STEPS; i++) {
+      const t = (i / STEPS) * 2 * Math.PI;
+      const x = W / 2 + 300 * Math.sin(a * t + delta + ph * 0.18);
+      const y = H / 2 + 240 * Math.sin(b * t + ph);
+      d += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+    }
+    return d + 'Z';
+  }
+
+  (function tick() {
+    phase += 0.004;
+    el.setAttribute('d', build(phase));
+    requestAnimationFrame(tick);
+  })();
+})();
+
+// ── Children shapes ──
+(function () {
+  const layer = document.getElementById('shapes-layer');
+
+  const shapes = [
+    // stars ✦
+    { type: 'star', color: '#FFD166', size: 28, top: '12%', left: '6%',  anim: 'floatA', dur: '3.8s', delay: '0s'    },
+    { type: 'star', color: '#EF476F', size: 20, top: '70%', left: '88%', anim: 'floatB', dur: '4.2s', delay: '0.5s'  },
+    { type: 'star', color: '#06D6A0', size: 16, top: '82%', left: '14%', anim: 'floatD', dur: '3.5s', delay: '1.2s'  },
+    { type: 'star', color: '#118AB2', size: 24, top: '18%', left: '90%', anim: 'floatA', dur: '5s',   delay: '0.8s'  },
+
+    // circles ●
+    { type: 'circle', color: '#FFD166', size: 22, top: '55%', left: '4%',  anim: 'floatC', dur: '4s',   delay: '0.3s'  },
+    { type: 'circle', color: '#EF476F', size: 16, top: '25%', left: '78%', anim: 'floatB', dur: '3.6s', delay: '1s'    },
+    { type: 'circle', color: '#06D6A0', size: 30, top: '88%', left: '50%', anim: 'floatA', dur: '4.8s', delay: '0.6s'  },
+    { type: 'circle', color: '#c084fc', size: 14, top: '10%', left: '45%', anim: 'floatC', dur: '3.2s', delay: '1.4s'  },
+
+    // triangles ▲
+    { type: 'tri', color: '#EF476F', size: 26, top: '40%', left: '92%', anim: 'floatD',   dur: '4.4s', delay: '0.2s'  },
+    { type: 'tri', color: '#118AB2', size: 20, top: '78%', left: '72%', anim: 'floatA',   dur: '3.9s', delay: '1.1s'  },
+    { type: 'tri', color: '#FFD166', size: 18, top: '8%',  left: '60%', anim: 'floatB',   dur: '5.2s', delay: '0.7s'  },
+
+    // squares ■ (rotated = diamond)
+    { type: 'square', color: '#06D6A0', size: 20, top: '62%', left: '82%', anim: 'spinFloat', dur: '6s',   delay: '0s'    },
+    { type: 'square', color: '#EF476F', size: 14, top: '32%', left: '3%',  anim: 'spinFloat', dur: '7s',   delay: '1.5s'  },
+    { type: 'square', color: '#c084fc', size: 24, top: '90%', left: '30%', anim: 'spinFloat', dur: '5.5s', delay: '0.9s'  },
+
+    // small dots
+    { type: 'dot', color: '#FFD166', size: 10, top: '46%', left: '96%', anim: 'floatC', dur: '3s',   delay: '0.4s'  },
+    { type: 'dot', color: '#EF476F', size: 8,  top: '6%',  left: '22%', anim: 'floatB', dur: '4.1s', delay: '1.3s'  },
+    { type: 'dot', color: '#118AB2', size: 12, top: '94%', left: '62%', anim: 'floatA', dur: '3.7s', delay: '0.1s'  },
+  ];
+
+  shapes.forEach(s => {
+    const wrap = document.createElement('div');
+    wrap.className = 'shape';
+    wrap.style.cssText = `
+      top: ${s.top}; left: ${s.left};
+      animation-name: ${s.anim};
+      animation-duration: ${s.dur};
+      animation-delay: ${s.delay};
+    `;
+
+    let svg = '';
+    const sz = s.size;
+
+    if (s.type === 'star') {
+      // 4-point star
+      const half = sz / 2, inner = sz * 0.22;
+      const pts = [];
+      for (let i = 0; i < 8; i++) {
+        const angle = (i * Math.PI) / 4 - Math.PI / 2;
+        const r = i % 2 === 0 ? half : inner;
+        pts.push(`${half + r * Math.cos(angle)},${half + r * Math.sin(angle)}`);
+      }
+      svg = `<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}"><polygon points="${pts.join(' ')}" fill="${s.color}" opacity="0.85"/></svg>`;
+    } else if (s.type === 'circle') {
+      svg = `<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}"><circle cx="${sz/2}" cy="${sz/2}" r="${sz/2 - 1}" fill="${s.color}" opacity="0.8"/></svg>`;
+    } else if (s.type === 'tri') {
+      svg = `<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}"><polygon points="${sz/2},2 ${sz-2},${sz-2} 2,${sz-2}" fill="${s.color}" opacity="0.8"/></svg>`;
+    } else if (s.type === 'square') {
+      const half = sz / 2;
+      svg = `<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}"><rect x="${sz*0.15}" y="${sz*0.15}" width="${sz*0.7}" height="${sz*0.7}" rx="3" fill="${s.color}" opacity="0.75" transform="rotate(45 ${half} ${half})"/></svg>`;
+    } else if (s.type === 'dot') {
+      svg = `<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}"><circle cx="${sz/2}" cy="${sz/2}" r="${sz/2 - 1}" fill="${s.color}" opacity="0.7"/></svg>`;
+    }
+
+    wrap.innerHTML = svg;
+    layer.appendChild(wrap);
+  });
+})();
+
+// ── Confetti burst ──
+(function () {
+  const canvas = document.getElementById('confetti');
+  const ctx = canvas.getContext('2d');
+  function resize() { canvas.width = innerWidth; canvas.height = innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const colors = ['#ff0000', '#FFD166', '#EF476F', '#06D6A0', '#118AB2', '#c084fc'];
+  let particles = [];
+
+  class P {
+    constructor() {
+      this.x     = innerWidth / 2 + (Math.random() - 0.5) * 280;
+      this.y     = innerHeight * 0.4;
+      this.vx    = (Math.random() - 0.5) * 7;
+      this.vy    = -(Math.random() * 8 + 3);
+      this.g     = 0.2;
+      this.r     = 3 + Math.random() * 4;
+      this.color = colors[Math.floor(Math.random() * colors.length)];
+      this.alpha = 1;
+      this.rot   = Math.random() * Math.PI * 2;
+      this.rs    = (Math.random() - 0.5) * 0.15;
+      this.rect  = Math.random() > 0.5;
+    }
+    update() {
+      this.x += this.vx; this.vy += this.g; this.y += this.vy; this.rot += this.rs;
+      if (this.y > innerHeight * 0.9) this.alpha -= 0.04;
+    }
+    draw() {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, this.alpha);
+      ctx.fillStyle = this.color;
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.rot);
+      if (this.rect) ctx.fillRect(-this.r, -this.r / 2, this.r * 2, this.r);
+      else { ctx.beginPath(); ctx.arc(0, 0, this.r, 0, Math.PI * 2); ctx.fill(); }
+      ctx.restore();
+    }
+  }
+
+  setTimeout(() => {
+    for (let i = 0; i < 90; i++) setTimeout(() => particles.push(new P()), i * 11);
+  }, 500);
+
+  (function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles = particles.filter(p => p.alpha > 0);
+    particles.forEach(p => { p.update(); p.draw(); });
+    requestAnimationFrame(loop);
+  })();
+})();
+</script>
+</body>
+</html>
