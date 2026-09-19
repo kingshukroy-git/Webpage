@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Pacifico&display=swap" rel="stylesheet">
+    <style>
+        /* =============================================
+           ORIGINAL CODE — UNTOUCHED
+        ============================================= */
+        body {
+            background-color: #87CEEB;
+            background-image: linear-gradient(180deg, #87CEEB 0%, #E0F7FA 100%);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden;
+        }
+        .main-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            text-align: center;
+            width: 90%;
+            z-index: 1;
+            margin-top: -10vh; 
+        }
+        .balloon-corner {
+            position: absolute;
+            bottom: -145px;
+            right: 80px; 
+            display: flex;
+            gap: 12px;
+            opacity: 0;
+            animation: riseUp 6s cubic-bezier(0.25,0.1,0.25,0.1) forwards 1s;
+            z-index: 10;
+        }
+        .balloon {
+            width: 45px;
+            height: 55px;
+            background-color: #ff6b81;
+            border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.3rem;
+            font-weight: bold;
+            position: relative;
+            box-shadow: inset -3px -3px 0 rgba(0,0,0,0.1);
+            animation: floatSlightly 3s ease-in-out infinite;
+        }
+        .balloon::after {
+            content: "";
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            width: 1px;
+            height: 18px;
+            background: rgba(255,255,255,0.6);
+        }
+        .b-zero { animation: floatSlightly 3s ease-in-out infinite, zeroFlyAway 3s ease-in forwards 6s; }
+        .b-one-mover {
+            position: absolute;
+            right: 0;
+            opacity: 0;
+            transform: translateY(200px);
+            animation: oneEnter 2s ease-out forwards 6s;
+        }
+        .b-one { background-color: #ff4757; animation: floatSlightly 3s ease-in-out -3s infinite; }
+        @keyframes riseUp {
+            0% { transform: translateY(10vh); opacity: 0; }
+            100% { transform: translateY(-75vh); opacity: 1; } 
+        }
+        @keyframes floatSlightly {
+            0%, 100% { transform: translateY(0) rotate(-3deg); }
+            50% { transform: translateY(-12px) rotate(3deg); }
+        }
+        @keyframes zeroFlyAway { to { transform: translateY(-400px); opacity: 0; } }
+        @keyframes oneEnter { 0% { transform: translateY(100vh); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+        .svg-container { width: 100%; height: auto; overflow: visible; }
+        .broken-line { fill: none; stroke: rgba(255, 255, 255, 0.6); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 20, 20; animation: flowLine 3s linear infinite; }
+        @keyframes flowLine { from { stroke-dashoffset: 400; } to { stroke-dashoffset: 0; } }
+        .mask-path { fill: none; stroke: white; stroke-width: 35; stroke-dasharray: 1; stroke-dashoffset: 1; }
+        .mask-top { animation: revealPart 1.2s linear forwards; }
+        .mask-bottom { animation: revealPart 1.2s linear 2.8s forwards, hoverTrail 4s ease-in-out 4s infinite; }
+        @keyframes revealPart { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+        @keyframes hoverTrail { 0%, 100% { stroke-dashoffset: 0; } 50% { stroke-dashoffset: 0.2; } }
+        .paper-boat { fill: white; opacity: 0; offset-path: path("M30,50 Q130,-10 240,50 C310,110 310,240 380,300 Q500,360 580,230"); animation: boatAppear 0.5s ease forwards 3s, boatIntro 1s ease-out forwards 3s, boatFloatTop 4s ease-in-out 4s infinite; }
+        .paper-plane { fill: white; offset-path: path("M30,50 Q130,-10 240,50 C310,110 310,240 380,300 Q500,360 580,230"); offset-rotate: auto 10deg; animation: introFlight 4s linear forwards, hoverLoop 4s ease-in-out 4s infinite; }
+        @keyframes boatAppear { to { opacity: 1; } }
+        @keyframes boatIntro { 0% { offset-distance: 0%; } 100% { offset-distance: 20%; } }
+        @keyframes boatFloatTop { 0%, 100% { offset-distance: 20%; offset-rotate: auto 0deg; } 50% { offset-distance: 15%; offset-rotate: auto 5deg; } }
+        @keyframes introFlight { 0% { offset-distance: 0%; } 100% { offset-distance: 100%; } }
+        @keyframes hoverLoop { 0%, 100% { offset-distance: 100%; offset-rotate: auto 10deg; } 50% { offset-distance: 90%; offset-rotate: auto 0deg; } }
+        .text-path { font-family: 'Dancing Script', cursive; font-size: 100px; fill: transparent; stroke: #ffffff; stroke-width: 2px; stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: drawLine 5s ease-in-out forwards, fillText 1s ease forwards 2.5s; }
+        @keyframes drawLine { to { stroke-dashoffset: 0; } }
+        @keyframes fillText { to { fill: #ffffff; stroke: transparent; } }
+        .name-text { font-family: 'Pacifico', cursive; font-size: 3rem; color: white; margin-top: 5px; }
+        .message-box { opacity: 0; animation: fadeIn 4.5s ease forwards 2.3s; position: relative; }
+        @keyframes fadeIn { to { opacity: 1; } }
+        .btn { background: #ff6b81; color: white; border: none; padding: 15px 40px; border-radius: 50px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 25px; transition: 0.3s; position: relative; }
+        .btn:hover { transform: scale(1.05); background: #ff4757; }
+        .surprise-text { position: absolute; width: 100%; left: 0; top: 100%; padding-top: 8px; font-size: 0.9rem; font-weight: normal; opacity: 0; transition: opacity 0.5s ease; pointer-events: none; }
+        .surprise-text.visible { opacity: 1; }
+
+        /* =============================================
+           ADDED — ORIGINAL UNTOUCHED ABOVE
+        ============================================= */
+
+        /* Ribbon banner */
+        .ribbon-banner {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0;
+            animation: fadeIn 1.5s ease forwards 3.5s;
+            padding-top: 8px;
+        }
+        .ribbon-flag {
+            /* Wide enough to look like bunting, not too tall */
+            width: 30px;
+            height: 42px;
+            flex-shrink: 0;
+            clip-path: polygon(0 0, 100% 0, 100% 72%, 50% 100%, 0 72%);
+            animation: flagWiggle 2.2s ease-in-out infinite;
+            animation-delay: var(--fw);
+        }
+        @keyframes flagWiggle {
+            0%, 100% { transform: rotate(-2deg); }
+            50%       { transform: rotate(2deg) scaleY(1.03); }
+        }
+
+        /* DNA — drawn on a canvas so overflow:hidden can't clip it */
+        #dnaCanvas {
+            position: fixed;
+            bottom: 0;
+            left: 0px;
+            pointer-events: none;
+            z-index: 3;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards 5.5s;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- ADDED: ribbon banner (flags injected by JS) -->
+    <div class="ribbon-banner" id="ribbonBanner"></div>
+
+    <!-- ADDED: DNA canvas (drawn by JS, bypasses overflow:hidden) -->
+    <canvas id="dnaCanvas"></canvas>
+
+    <!-- ===== ORIGINAL HTML — UNTOUCHED ===== -->
+    <div class="main-wrapper">
+        <div class="balloon-corner">
+            <div class="balloon b-two">2</div>
+            <div class="balloon b-zero">2</div>
+            <div class="b-one-mover">
+                <div class="balloon b-one">3</div>
+            </div>
+        </div>
+
+        <div class="container">
+            <svg viewBox="0 0 600 320" class="svg-container">
+                <defs>
+                    <mask id="trailTop"><path d="M30,50 Q130,-10 240,50" class="mask-path mask-top" pathLength="1" /></mask>
+                    <mask id="trailBottom"><path d="M380,300 Q500,360 580,230" class="mask-path mask-bottom" pathLength="1" /></mask>
+                    <g id="bigPlane"><g transform="scale(1.6)"><path d="M25,0 L-15,12 L-5,0 L-15,-12 Z" /><path d="M-5,0 L25,0" stroke="#e6e6e6" stroke-width="1" /></g></g>
+                    <g id="boatIcon"><g transform="scale(1.2) translate(0, -10)"><path d="M-20,0 L20,0 L12,10 L-12,10 Z" fill="white" /><path d="M0,0 L0,-18 L15,0 Z" fill="#f0f0f0" /><path d="M-2,0 L-2,-12 L-12,0 Z" fill="#e0e0e0" /></g></g>
+                </defs>
+                <path d="M30,50 Q130,-10 240,50" class="broken-line" mask="url(#trailTop)" />
+                <path d="M380,300 Q500,360 580,230" class="broken-line" mask="url(#trailBottom)" />
+                <use href="#boatIcon" class="paper-boat" />
+                <use href="#bigPlane" class="paper-plane" />
+                <text x="50%" y="40%" text-anchor="middle" class="text-path">Happy</text>
+                <text x="50%" y="85%" text-anchor="middle" class="text-path">Birthday</text>
+            </svg>
+
+            <div class="message-box">
+                <p class="name-text">Ketaki didi</p>
+                <p style="color: white; font-size: 1.1rem; margin-top: 10px;">I apologise for being late<br>Please dont age this fast</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        // ===== ORIGINAL JS (button removed, so trigger confetti automatically) =====
+        function celebrate() {
+            confetti({ particleCount: 200, spread: 100, origin: { y: 0.7 }, colors: ['#ff6b81', '#ffffff', '#ffd700'] });
+        }
+        setTimeout(celebrate, 2800);
+
+        // ===== ADDED JS =====
+
+        // --- Ribbon flags ---
+        const rb = document.getElementById('ribbonBanner');
+        const rbColors = ['#ff6b81','#ffd700','#a29bfe','#74b9ff','#55efc4','#fd79a8','#fdcb6e','#6c5ce7'];
+        // Each flag is 30px wide; fill the screen width exactly
+        const flagCount = Math.ceil(window.innerWidth / 30) + 1;
+        for (let i = 0; i < flagCount; i++) {
+            const f = document.createElement('div');
+            f.className = 'ribbon-flag';
+            f.style.cssText = `background:${rbColors[i % rbColors.length]};--fw:${(i * 0.07).toFixed(2)}s;`;
+            rb.appendChild(f);
+        }
+
+        // --- DNA on canvas ---
+        // Canvas covers bottom-left quadrant; tilt is applied via ctx.rotate
+        const dnaCanvas = document.getElementById('dnaCanvas');
+        const W = Math.round(window.innerWidth * 0.45);
+        const H = Math.round(window.innerHeight * 0.65);
+        dnaCanvas.width  = W;
+        dnaCanvas.height = H;
+
+        const dc = dnaCanvas.getContext('2d');
+
+        // Helix parameters
+        const TILT    = -40 * Math.PI / 180;   // rotate canvas ~28° anticlockwise
+        const AMP     = 38;    // horizontal amplitude of each strand
+        const PERIOD  = 90;    // pixels per full sine cycle
+        const LENGTH  = 580;   // total length along the helix axis
+        const CX      = 160;    // centre-x of the helix in local space
+        let   phase   = 0;     // scrolling phase
+
+        function drawDNA() {
+            dc.clearRect(0, 0, W, H);
+            dc.save();
+
+            // Anchor to bottom-left of canvas, then tilt
+            dc.translate(0, H+100);
+            dc.rotate(TILT);
+
+            const steps = 300;
+
+            // ---- Strand 1 (blue) ----
+            dc.beginPath();
+            for (let i = 0; i <= steps; i++) {
+                const t  = i / steps;
+                const y  = -t * LENGTH;                          // goes upward
+                const x  = CX + AMP * Math.sin(2 * Math.PI * t * (LENGTH / PERIOD) + phase);
+                i === 0 ? dc.moveTo(x, y) : dc.lineTo(x, y);
+            }
+            dc.strokeStyle = 'rgba(100, 190, 255, 0.72)';
+            dc.lineWidth   = 3;
+            dc.lineCap     = 'round';
+            dc.lineJoin    = 'round';
+            dc.setLineDash([12, 7]);
+            dc.stroke();
+
+            // ---- Strand 2 (pink) ----
+            dc.beginPath();
+            for (let i = 0; i <= steps; i++) {
+                const t  = i / steps;
+                const y  = -t * LENGTH;
+                const x  = CX - AMP * Math.sin(2 * Math.PI * t * (LENGTH / PERIOD) + phase);
+                i === 0 ? dc.moveTo(x, y) : dc.lineTo(x, y);
+            }
+            dc.strokeStyle = 'rgba(255, 107, 129, 0.72)';
+            dc.lineWidth   = 3;
+            dc.setLineDash([12, 7]);
+            dc.stroke();
+
+            // ---- Rungs ----
+            dc.setLineDash([]);
+            dc.lineWidth = 1.8;
+            const rungSpacing = PERIOD / 2;
+            const numRungs    = Math.floor(LENGTH / rungSpacing);
+            for (let r = 0; r < numRungs; r++) {
+                const t   = (r * rungSpacing) / LENGTH;
+                const y   = -t * LENGTH;
+                const x1  = CX + AMP * Math.sin(2 * Math.PI * t * (LENGTH / PERIOD) + phase);
+                const x2  = CX - AMP * Math.sin(2 * Math.PI * t * (LENGTH / PERIOD) + phase);
+                // Fade rungs based on position
+                const fade = 0.2 + 0.55 * Math.abs(Math.sin(phase * 0.5 + r * 0.4));
+                dc.strokeStyle = `rgba(255,255,255,${fade})`;
+                dc.beginPath();
+                dc.moveTo(x1, y);
+                dc.lineTo(x2, y);
+                dc.stroke();
+            }
+
+            dc.restore();
+
+            // Advance scrolling phase slowly
+            phase += 0.018;
+            requestAnimationFrame(drawDNA);
+        }
+
+        drawDNA();
+    </script>
+</body>
+</html>
