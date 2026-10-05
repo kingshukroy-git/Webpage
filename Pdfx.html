@@ -34,10 +34,10 @@
 
         /* Apple Liquid Glass Design System */
         :root {
-            --glass-bg: rgba(255, 255, 255, 0.55);
+            --glass-bg: rgba(255, 255, 255, 0.85);
             --glass-border: rgba(255, 255, 255, 0.6);
             --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.10);
-            --glass-blur: blur(20px) saturate(160%);
+            --glass-blur: blur(50px) saturate(160%);
             --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
             --text-main: #1D1D1F;
             --text-secondary: #515154;
@@ -80,6 +80,7 @@
         .card {
             position: relative;
             isolation: isolate;
+          z-index: 1;
             width: 100%;
             max-width: 700px;
             isolation: isolate;
@@ -94,6 +95,7 @@
             flex-direction: column;
             gap: 1.5rem;
             overflow: hidden;
+          opacity: 0.95;
         }
 
         /* Soft glossy sheen across the top of the glass surface */
@@ -123,20 +125,20 @@
             content: '';
             position: absolute;
             inset: 0;
-            background: rgba(255,255,255,0.12);
+            background: rgba(255, 255, 255, 0.1);
             pointer-events: none;
         }
 
         .background-animation-canvas {
             position: absolute !important;
-            left: 200px !important;
-            top: 200px !important;
-            width: max(100%, 100vh) !important;
-            height: max(100%, 100vh) !important;
-            transform: translate(-50%, -50%) scale(1.1);
-            opacity: 0.040;
-            filter: blur(2.2px);
-            -webkit-filter: blur(0.5px);
+            left: 50% !important;
+            top: 50% !important;
+            width: max(100%, 900px) !important;
+            height: max(100%, 900px) !important;
+            transform: translate(-50%, -50%) scale(1.033);
+            opacity: 0.3;
+            filter: blur(0px);
+            -webkit-filter: blur(0px);
             pointer-events: none;
             display: block !important;
         }
@@ -593,9 +595,9 @@
     </style>
 </head>
 <body>
-
+<div id="animationBackground" aria-hidden="true"></div>
     <div class="card">
-        <div id="animationBackground" aria-hidden="true"></div>
+        
         <h1>PDF tool</h1>
         
         <div class="segmented-control">
