@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Tool</title>
+    <!-- Professional typeface (falls back to Apple system font automatically if offline) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- jsPDF and pdf.js for offline processing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.11/lib/p5.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            tap-highlight-color: transparent;
+        }
+
+        html {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .segment-btn, .btn-upload, .btn-generate, .remove-btn,
+        .page-thumb, .page-grid-actions span, .upload-area {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        /* Apple Liquid Glass Design System */
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.55);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.10);
+            --glass-blur: blur(20px) saturate(160%);
+            --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+            --text-main: #1D1D1F;
+            --text-secondary: #515154;
+            --apple-blue: #0071E3;
+            --apple-blue-hover: #0077ED;
+            --radius-main: 26px;
+            --radius-btn: 980px;
+        }
+
+        /* Fallback for browsers/WebViews that don't support backdrop-filter
+           (common on some Android builds) so the glass still reads as a
+           surface instead of disappearing */
+        @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+            .card { background: rgba(255, 255, 255, 0.92); }
+            .segment-indicator { background: rgba(255, 255, 255, 0.95); }
+            .upload-area { background: rgba(255, 255, 255, 0.7); }
+            .settings-section { background: rgba(255, 255, 255, 0.7); }
+        }
+
+        body {
+            margin: 0;
+            padding: 2rem 1rem;
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+            -webkit-font-smoothing: antialiased;
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 4rem);
+            /* macOS inspired mesh gradient background */
+            background-color: #f5f5f7;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(253,16%,7deg,0.07) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(225,39%,30deg,0.05) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(339,49%,30deg,0.05) 0, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        /* Glassmorphism Card */
+        .card {
+            position: relative;
+            isolation: isolate;
+            width: 100%;
+            max-width: 700px;
+            isolation: isolate;
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-main);
+            padding: 2.5rem;
+            box-shadow: var(--glass-shadow), var(--glass-highlight);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            overflow: hidden;
+        }
+
+        /* Soft glossy sheen across the top of the glass surface */
+        .card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.22), rgba(255,255,255,0));
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* The animated forms are a true background layer: they do not take
+           up layout space and sit behind every control inside the card. */
+        #animationBackground {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+            border-radius: inherit;
+        }
+
+        #animationBackground::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.12);
+            pointer-events: none;
+        }
+
+        .background-animation-canvas {
+            position: absolute !important;
+            left: 200px !important;
+            top: 200px !important;
+            width: max(100%, 100vh) !important;
+            height: max(100%, 100vh) !important;
+            transform: translate(-50%, -50%) scale(1.1);
+            opacity: 0.040;
+            filter: blur(2.2px);
+            -webkit-filter: blur(0.2px);
+            pointer-events: none;
+            display: block !important;
+        }
+
+        /* Everything else remains on top of the animation. */
+        .card > *:not(#animationBackground) {
+            position: relative;
+            z-index: 2;
+        }
+
+        h1 {
+            text-align: center;
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        /* Segmented Control */
+        .segmented-control {
+            position: relative;
+            display: flex;
+            background: rgba(0, 0, 0, 0.06);
+            padding: 4px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px) saturate(150%);
+            -webkit-backdrop-filter: blur(10px) saturate(150%);
+        }
+
+        .segment-indicator {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            height: calc(100% - 8px);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px) saturate(150%);
+            -webkit-backdrop-filter: blur(8px) saturate(150%);
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8);
+            transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+            will-change: transform;
+            z-index: 0;
+        }
+
+        .segment-btn {
+            position: relative;
+            z-index: 1;
+            flex: 1;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 10px;
+            transition: color 0.3s ease;
+        }
+
+        .segment-btn.active {
+            color: var(--text-main);
+        }
+
+        /* Sliding Tab Content */
+        .tab-container {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-track {
+            display: flex;
+            align-items: flex-start;
+            width: 200%;
+            transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+            will-change: transform;
+            backface-visibility: hidden;
+        }
+
+        .tab-content {
+            width: 50%;
+            flex: 0 0 50%;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            min-width: 0;
+        }
+
+        /* Upload Area */
+        .upload-area {
+            border: 2px dashed rgba(0, 0, 0, 0.15);
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.3s ease, background 0.3s ease, transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            background: rgba(255, 255, 255, 0.45);
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--apple-blue);
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 113, 227, 0.1);
+        }
+
+        .upload-area p {
+            color: var(--text-secondary);
+            font-size: 15px;
+            margin: 0 0 16px 0;
+        }
+
+        input[type="file"] { display: none; }
+
+        .btn-upload {
+            background-color: rgba(255, 255, 255, 0.8);
+            color: var(--apple-blue);
+            border: 1px solid rgba(0, 113, 227, 0.3);
+            padding: 8px 24px;
+            border-radius: var(--radius-btn);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        }
+
+        .upload-area:hover .btn-upload {
+            border-color: var(--apple-blue);
+            background-color: #FFFFFF;
+        }
+
+        /* Glass Preview Grid */
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 16px;
+            max-height: 250px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+
+        .preview-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .order-badge {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            background: var(--apple-blue);
+            color: white;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(4px);
+            color: #FF3B30;
+            border: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            line-height: 1;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .remove-btn:hover { transform: scale(1.1); }
+
+        /* Settings Panels */
+        .settings-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            background: rgba(255, 255, 255, 0.45);
+            border: 1px solid var(--glass-border);
+            padding: 1.5rem;
+            border-radius: 18px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-group label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+            letter-spacing: -0.01em;
+        }
+
+        .input-group small {
+            display: block;
+            padding-left: 2px;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 13px 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.7);
+            font-size: 15px;
+            line-height: 1.3;
+            outline: none;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus {
+            border-color: var(--apple-blue);
+            background: #FFFFFF;
+            box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
+        }
+
+        /* Sliders */
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .quality-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .quality-controls input[type="number"] {
+            width: 70px;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .size-badge {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--apple-blue);
+            border: 1px solid rgba(0,0,0,0.05);
+            min-width: 80px;
+            text-align: center;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 4px;
+            outline: none;
+            flex: 1;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #FFFFFF;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
+            transition: transform 0.1s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:active {
+            transform: scale(1.1);
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* PDF Page Selector Grid */
+        .page-grid-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-grid-actions {
+            display: flex;
+            gap: 14px;
+        }
+
+        .page-grid-actions span {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--apple-blue);
+            cursor: pointer;
+        }
+
+        .page-grid-actions span:hover {
+            text-decoration: underline;
+        }
+
+        .page-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+            gap: 12px;
+            max-height: 280px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+
+        .page-thumb {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 3/4;
+            background: rgba(255, 255, 255, 0.6);
+            border: 2px solid transparent;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .page-thumb:hover {
+            transform: translateY(-2px);
+        }
+
+        .page-thumb.selected {
+            border-color: var(--apple-blue);
+            box-shadow: 0 4px 14px rgba(0, 113, 227, 0.25);
+        }
+
+        .page-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            opacity: 0.55;
+            transition: opacity 0.15s ease;
+        }
+
+        .page-thumb.selected img {
+            opacity: 1;
+        }
+
+        .page-thumb-number {
+            position: absolute;
+            bottom: 6px;
+            right: 6px;
+            background: rgba(0, 0, 0, 0.55);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 8px;
+            backdrop-filter: blur(4px);
+        }
+
+        .page-thumb-check {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--apple-blue);
+            color: #fff;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: scale(0.6);
+            transition: all 0.15s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .page-thumb.selected .page-thumb-check {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .page-thumb-loading {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* Master Button */
+        .btn-generate {
+            background-color: var(--apple-blue);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: var(--radius-btn);
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            box-shadow: 0 4px 14px rgba(0, 113, 227, 0.3);
+        }
+
+        .btn-generate:hover:not(:disabled) {
+            background-color: var(--apple-blue-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0, 113, 227, 0.4);
+        }
+
+        .btn-generate:disabled {
+            background-color: rgba(0, 0, 0, 0.1);
+            color: rgba(0, 0, 0, 0.3);
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div id="animationBackground" aria-hidden="true"></div>
+        <h1>PDF tool</h1>
+        
+        <div class="segmented-control">
+            <div class="segment-indicator" id="segmentIndicator"></div>
+            <div class="segment-btn active" onclick="switchTab('imgToPdf', this)">Image to PDF</div>
+            <div class="segment-btn" onclick="switchTab('pdfToImg', this)">PDF to PNG</div>
+        </div>
+
+        <div class="tab-container" id="tabContainer">
+        <div class="tab-track" id="tabTrack">
+        <!-- TAB 1: Image to PDF -->
+        <div id="imgToPdfTab" class="tab-content active">
+            <div class="upload-area" id="dropZoneImg" onclick="document.getElementById('fileInputImg').click()">
+                <p>Drag and drop images here or click to browse</p>
+                <button class="btn-upload">Choose Images</button>
+                <input type="file" id="fileInputImg" multiple accept="image/*" onchange="handleImgFiles(event)">
+            </div>
+
+            <div class="preview-grid" id="previewGridImg" style="display: none;"></div>
+
+            <div class="settings-section" id="settingsImg" style="display: none;">
+                <div class="input-group">
+                    <label for="filenamePdf">Output File Name</label>
+                    <input type="text" id="filenamePdf" value="Document" placeholder="Enter filename">
+                </div>
+                
+                <div class="input-group">
+                    <div class="slider-header">
+                        <label>PDF Compression Quality (10 - 100)</label>
+                        <span class="size-badge" id="sizeEstimatePdf">0 KB</span>
+                    </div>
+                    <div class="quality-controls">
+                        <input type="range" id="qualitySliderImg" min="10" max="100" value="80">
+                        <input type="number" id="qualityInputImg" min="10" max="100" value="80">
+                    </div>
+                    <div class="slider-labels">
+                        <span>Small Size</span>
+                        <span>Original</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-generate" id="generatePdfBtn" onclick="generatePDF()" disabled>
+                Save as PDF
+            </button>
+        </div>
+
+        <!-- TAB 2: PDF to PNG -->
+        <div id="pdfToImgTab" class="tab-content">
+            <div class="upload-area" id="dropZonePdf" onclick="document.getElementById('fileInputPdf').click()">
+                <p>Drag and drop a PDF here or click to browse</p>
+                <button class="btn-upload">Choose PDF</button>
+                <input type="file" id="fileInputPdf" accept="application/pdf" onchange="handlePdfFile(event)">
+            </div>
+
+            <div class="settings-section" id="selectedPdfData" style="display: none; align-items: center; justify-content: space-between; flex-direction: row;">
+                <strong id="pdfFileName" style="font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 90%;">document.pdf</strong>
+                <button class="remove-btn" style="position: static;" onclick="removePdf()">x</button>
+            </div>
+
+            <div class="settings-section" id="settingsPdf" style="display: none;">
+                <div class="input-group">
+                    <div class="page-grid-header">
+                        <label>Select Pages (<span id="pdfTotalPages">0</span> total)</label>
+                        <div class="page-grid-actions">
+                            <span onclick="selectAllPages()">Select all</span>
+                            <span onclick="clearAllPages()">Clear</span>
+                        </div>
+                    </div>
+                    <div class="page-grid" id="pdfPageGrid"></div>
+                </div>
+
+                <div class="input-group">
+                    <label for="pageRangeInput">Page Range</label>
+                    <input type="text" id="pageRangeInput" placeholder="e.g. 1, 3, 5-7 (leave blank for all pages)">
+                    <small style="color: var(--text-secondary); font-size: 12px;" id="pageSelectionSummary">Type page numbers manually, or tap thumbnails above to select</small>
+                </div>
+
+                <div class="input-group">
+                    <div class="slider-header">
+                        <label>Render Scale (100% - 500%)</label>
+                    </div>
+                    <div class="quality-controls">
+                        <input type="range" id="qualitySliderPdf" min="100" max="500" step="10" value="300">
+                        <input type="number" id="qualityInputPdf" min="100" max="500" value="300">
+                    </div>
+                    <div class="slider-labels">
+                        <span>Standard (1x)</span>
+                        <span>Crisp (3x)</span>
+                        <span>Ultra Retina (5x)</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-generate" id="generatePngBtn" onclick="generatePNGs()" disabled>
+                Download Selected Pages
+            </button>
+        </div>
+        </div>
+        </div>
+    </div>
+
+    <script>
+/*
+By Okazz 2026
+*/
+
+let palette = ['#FCB500', '#007EB6', '#009135', '#e76b31', '#eb335e'];
+let ctx;
+let gridCells = [];
+const GRID_RES = 15;
+let cellSize;
+let forms = [];
+let strokeCol = '#212121';
+let strokeThickness = 2;
+
+function setup() {
+    const cnv = createCanvas(900, 900);
+    cnv.parent('animationBackground');
+    cnv.class('background-animation-canvas');
+    rectMode(CENTER);
+    colorMode(HSB, 360, 100, 100, 100);
+    ctx = drawingContext;
+    createGrid(width * 0.9);
+
+    let formTypes = [
+        PipeForm, PendulumForm, PinwheelForm, BoxStepForm,
+        BouncingBallsForm, SlopeBallForm, WavyForm, HammerForm
+    ];
+
+    for (let row of gridCells) {
+        for (let cell of row) {
+            let formType = random(formTypes);
+            forms.push(new formType(cell.x, cell.y, cell.z));
+        }
+    }
+}
+
+function draw() {
+    background('#ebf1f4');
+    for (let form of forms) {
+        form.run();
+    }
+}
+
+function createGrid(gridArea) {
+    cellSize = gridArea / GRID_RES;
+    for (let i = 0; i < GRID_RES; i++) {
+        gridCells[i] = [];
+        for (let j = 0; j < GRID_RES; j++) {
+            let cellX = i * cellSize + (cellSize / 2) + (width - gridArea) / 2;
+            let cellY = j * cellSize + (cellSize / 2) + (height - gridArea) / 2;
+            gridCells[i][j] = createVector(cellX, cellY, cellSize);
+        }
+    }
+}
+
+function easeInOutSine(x) {
+    return -(Math.cos(Math.PI * x) - 1) / 2;
+}
+
+class PipeForm {
+    constructor(x, y, w) {
+        this.x=x; this.y=y; this.w=w;
+        this.angle=int(random(4))*(TAU/4);
+        this.scaleX=random([-1,1]);
+        this.d=this.w/6;
+        this.mos();
+        this.hanen=this.w/3/2;
+        this.t1=30; this.t2=this.t1+30; this.t3=this.t2+30; this.t4=this.t3+30;
+        this.fillCol=random(palette);
+    }
+    display() {
+        push(); translate(this.x,this.y); scale(this.scaleX,1); rotate(this.angle);
+        stroke(strokeCol); strokeWeight(0); noFill(); rect(0,0,this.w); ctx.clip();
+        let r=this.hanen;
+        noFill(); stroke(strokeCol); strokeWeight(strokeThickness); beginShape();
+        vertex(-r*2,-this.w/2);
+        for(let a=PI;a>0;a-=PI/180) vertex(-r+r*cos(a),r*sin(a));
+        for(let a=PI;a<TAU;a+=PI/180) vertex(r+r*cos(a),r*sin(a));
+        vertex(r*2,this.w/2); endShape();
+        fill(this.fillCol); circle(this.ballX,this.ballY,this.d); pop();
+
+        push(); translate(this.x,this.y); rotate(this.angle);
+        noFill(); stroke(strokeCol); strokeWeight(strokeThickness);
+        line(-this.w/2,this.w/2,this.w/2,this.w/2);
+        line(-this.w/2,-this.w/2,this.w/2,-this.w/2); pop();
+    }
+    update() {
+        this.timer++;
+        if(this.timer<this.t1){
+            let prog=norm(this.timer,0,this.t1-1);
+            this.ballY=lerp(-(this.w/2)-this.d,0,prog);
+        } else if(this.timer<this.t2){
+            let prog=norm(this.timer,this.t1,this.t2-1), a=PI*(1-prog);
+            this.ballX=-this.hanen+this.hanen*cos(a);
+            this.ballY=this.hanen*sin(a);
+        } else if(this.timer<this.t3){
+            let prog=norm(this.timer,this.t2,this.t3-1), a=PI+PI*prog;
+            this.ballX=this.hanen+this.hanen*cos(a);
+            this.ballY=this.hanen*sin(a);
+        } else if(this.timer<this.t4){
+            let prog=norm(this.timer,this.t3,this.t4);
+            this.ballY=lerp(0,(this.w/2)+this.d,prog);
+        }
+        if(this.timer===this.t4) this.mos();
+    }
+    run(){this.display();this.update();}
+    mos(){this.timer=-int(random(300));this.ballX=-this.w/3;this.ballY=-(this.w/2)-this.d;}
+}
+
+class PendulumForm {
+    constructor(x,y,w){
+        this.x=x;this.y=y;this.w=w;this.timer=int(random(100));
+        this.angle=int(random(4))*(TAU/4);this.circleD=w/3;this.llcool=w*.6;
+        this.fillCol=random(palette);
+    }
+    display(){
+        push();translate(this.x,this.y);noFill();stroke(strokeCol);strokeWeight(strokeThickness);
+        line(-this.w/2,-this.w/2,this.w/2,-this.w/2);
+        line(0,-this.w/2,this.circleX,this.circleY);
+        fill(this.fillCol);circle(this.circleX,this.circleY,this.circleD);pop();
+    }
+    update(){
+        let theta=PI/2+PI*.15*sin(this.timer/15);
+        this.circleX=this.llcool*cos(theta);
+        this.circleY=-this.w/2+this.llcool*sin(theta);this.timer++;
+    }
+    run(){this.display();this.update();}
+}
+
+class PinwheelForm {
+    constructor(x,y,w){
+        this.x=x;this.y=y;this.w=w;this.timer=int(random(100));
+        this.angle=int(random(4))*(TAU/4);this.scaleX=random([-1,1]);
+        this.fillCol=random(palette);this.rot=random(100);this.circleD=w*.2;
+    }
+    display(){
+        push();translate(this.x,this.y);scale(this.scaleX,1);rotate(this.angle);
+        noFill();stroke(strokeCol);strokeWeight(strokeThickness);
+        line(-this.w/2,this.w/2,this.w/2,this.w/2);
+        line(0,this.w/2,0,(this.w/2)-this.w*.25);rotate(this.rot);
+        circle(0,0,this.w*.5);
+        for(let i=0;i<3;i++){line(0,0,this.w*.25,0);rotate(TAU/3);}
+        fill(this.fillCol);circle(0,0,this.circleD);pop();
+    }
+    update(){this.rot=this.timer/40;this.timer++;}
+    run(){this.display();this.update();}
+}
+
+class BoxStepForm {
+    constructor(x,y,w){
+        this.x=x;this.y=y;this.w=w;this.timer=-int(random(60));
+        this.angle=int(random(4))*(TAU/4);this.scaleX=random([-1,1]);
+        this.fillCol=random(palette);this.moveType=0;this.squareW=w/3;
+        this.ppp=w/2-this.squareW/2;this.squareX=this.ppp;this.squareY=this.ppp;
+        this.t1=40;this.t2=this.t1+20;
+    }
+    display(){
+        push();translate(this.x,this.y);scale(this.scaleX,1);rotate(this.angle);
+        noFill();stroke(strokeCol);strokeWeight(strokeThickness);rect(0,0,this.w,this.w);
+        fill(this.fillCol);rect(this.squareX,this.squareY,this.squareW,this.squareW);pop();
+    }
+    update(){
+        if(0<this.timer&&this.timer<this.t1){
+            let prog=norm(this.timer,0,this.t1-1);
+            if(this.moveType===0)this.squareY=lerp(this.ppp,-this.ppp,easeInOutSine(prog));
+            else if(this.moveType===1)this.squareX=lerp(this.ppp,-this.ppp,easeInOutSine(prog));
+            else if(this.moveType===2)this.squareY=lerp(-this.ppp,this.ppp,easeInOutSine(prog));
+            else if(this.moveType===3)this.squareX=lerp(-this.ppp,this.ppp,easeInOutSine(prog));
+        }
+        if(this.t2<this.timer){
+            this.timer=0;this.moveType++;
+            if(this.moveType===4)this.moveType=0;
+        }
+        this.timer++;
+    }
+    run(){this.display();this.update();}
+}
+
+class BouncingBallsForm {
+    constructor(x,y,w){
+        this.x=x;this.y=y;this.w=w;this.timer=-int(random(60));
+        this.angle=int(random(4))*(TAU/4);this.scaleX=random([-1,1]);
+        this.circleD=w/6;this.fillCol=random(palette);
+        this.circleH1=w*.25;this.circleH2=-w*.25;
+        this.t1=30;this.t2=this.t1+30;this.t3=this.t2+30;this.t4=this.t3+30;
+    }
+    display(){
+        push();translate(this.x,this.y);scale(this.scaleX,1);rotate(this.angle);
+        stroke(strokeCol);strokeWeight(strokeThickness);
+        line(this.w/6,this.w/2,this.w/6,this.circleH1);
+        line(-this.w/6,this.w/2,-this.w/6,this.circleH2);
+        fill(this.fillCol);circle(this.w/6,this.circleH1,this.circleD);
+        circle(-this.w/6,this.circleH2,this.circleD);
+        line(-this.w/2,this.w/2,this.w/2,this.w/2);pop();
+    }
+    update(){
+        if(0<=this.timer&&this.timer<this.t1){
+            let prog=norm(this.timer,0,this.t1-1);
+            this.circleH1=lerp(this.w*.25,-this.w*.25,easeInOutSine(prog));
+            this.circleH2=lerp(-this.w*.25,this.w*.25,easeInOutSine(prog));
+        }
+        if(this.t2<=this.timer&&this.timer<this.t3){
+            let prog=norm(this.timer,this.t2,this.t3-1);
+            this.circleH1=lerp(-this.w*.25,this.w*.25,easeInOutSine(prog));
+            this.circleH2=lerp(this.w*.25,-this.w*.25,easeInOutSine(prog));
+        }
+        if(this.t4===this.timer)this.timer=0;this.timer++;
+    }
+    run(){this.display();this.update();}
+}
+
+class SlopeBallForm {
+    constructor(x,y,w){
+        this.x=x;this.y=y;this.w=w;this.timer=int(random(2434));
+        this.angle=int(random(4))*(TAU/4);this.scaleX=random([-1,1]);
+        this.fillCol=random(palette);this.ballX=w;this.ballY=w;this.ballD=w*.3;
+    }
+    display(){
+        push();translate(this.x,this.y);scale(this.scaleX,1);rotate(this.angle);
+        stroke(strokeCol);strokeWeight(0);noFill();rect(0,0,this.w);ctx.clip();
+        strokeWeight(strokeThickness);fill(this.fillCol);circle(this.ballX,this.ballY,this.ballD);pop();
+        push();translate(this.x,this.y);scale(this.scaleX,1);rotate(this.angle);
+        noFill();stroke(strokeCol);strokeWeight(strokeThickness);
+        arc(-this.w/2,-this.w/2,this.w*2,this.w*2,0,PI/2);
+        line(-this.w/2,this.w/2,-this.w/2,-this.w/2);
+        line(-this.w/2,-this.w/2,this.w/2,-this.w/2);pop();
+    }
+    update(){
+        this.timer++;let r=this.w-this.ballD/2,a=this.timer*.04;
+        this.ballX=-this.w/2+r*cos(a);this.ballY=-this.w/2+r*sin(a);
+    }
+    run(){this.display();this.update();}
+}
+
+class WavyForm {
+    constructor(x,y,w){
+        this.x=x;this.y=y;this.w=w;this.timer=int(random(1000));
+        this.angle=int(random(4))*(TAU/4);this.scaleX=random([-1,1]);
+        this.fillCol=random(palette);this.squareW=w*.5;this.squareH=w*.2;
+    }
+    display(){
+        push();translate(this.x,this.y);scale(this.scaleX,1);rotate(this.angle);
+        stroke(strokeCol);strokeWeight(strokeThickness);fill(this.fillCol);
+        rect(0,(this.w-this.squareH)/2,this.squareW,this.squareH);noFill();beginShape();
+        for(let i=0;i<100;i++){
+            let nor=norm(i,0,99),yy=lerp(-this.w/2,this.w/2-this.squareH,nor);
+            let xx=this.w/4*sin(nor*TAU+this.timer/20);vertex(xx,yy);
+        }
+        endShape();
+        line(-this.w/2,this.w/2,this.w/2,this.w/2);
+        line(-this.w/2,-this.w/2,this.w/2,-this.w/2);pop();
+    }
+    update(){this.timer++;}
+    run(){this.display();this.update();}
+}
+
+class HammerForm {
+    constructor(x,y,w){
+        this.x=x;this.y=y;this.w=w;this.timer=-int(random(300));
+        this.angle=int(random(4))*(TAU/4);this.scaleX=random([-1,1]);
+        this.t1=20;this.t2=this.t1+180;this.ballD=w*.3;
+        this.ballY=w*.4-this.ballD/2;this.fillCol=random(palette);
+    }
+    display(){
+        push();translate(this.x,this.y);scale(this.scaleX,1);rotate(this.angle);
+        stroke(strokeCol);strokeWeight(strokeThickness);
+        line(0,-this.w*.4,0,this.w*.4);
+        line(-this.w/2,-this.w/2,this.w/2,-this.w/2);
+        line(-this.w/2,this.w/2,this.w/2,this.w/2);
+        fill(this.fillCol);circle(0,this.ballY,this.ballD);pop();
+    }
+    update(){
+        this.timer++;
+        if(0<=this.timer&&this.timer<this.t1){
+            let prog=norm(this.timer,0,this.t1-1);
+            this.ballY=(this.w*.4-this.ballD/2)*lerp(1,-1,prog);
+        }else if(this.t1<this.timer&&this.timer<this.t2){
+            let prog=norm(this.timer,this.t1,this.t2-1);
+            this.ballY=(this.w*.4-this.ballD/2)*lerp(-1,1,prog);
+        }else if(this.timer>this.t2)this.timer=-int(random(200));
+    }
+    run(){this.display();this.update();}
+}
+/* Keep the generated artwork visually centered as the container changes. */
+function windowResized() {
+    // The canvas itself stays square; CSS handles the responsive scaling.
+}
+
+    </script>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // --- UI Utilities ---
+        const tabOrder = ['imgToPdf', 'pdfToImg'];
+        let activeTabIndex = 0;
+
+        function switchTab(tabId, btnEl) {
+            const index = tabOrder.indexOf(tabId);
+            if (index === activeTabIndex) return;
+            activeTabIndex = index;
+
+            document.querySelectorAll('.segment-btn').forEach(el => el.classList.remove('active'));
+            if (btnEl) btnEl.classList.add('active');
+
+            document.getElementById('segmentIndicator').style.transform = `translateX(${index * 100}%)`;
+            document.getElementById('tabTrack').style.transform = `translateX(-${index * 50}%)`;
+
+            document.querySelectorAll('.tab-content').forEach((el, i) => {
+                el.classList.toggle('active', i === index);
+            });
+        }
+
+        function syncInputs(sliderId, inputId, callback) {
+            const slider = document.getElementById(sliderId);
+            const input = document.getElementById(inputId);
+            
+            slider.addEventListener('input', (e) => {
+                input.value = e.target.value;
+                if (callback) callback();
+            });
+            input.addEventListener('input', (e) => {
+                let val = parseInt(e.target.value);
+                if (val < parseInt(slider.min)) val = slider.min;
+                if (val > parseInt(slider.max)) val = slider.max;
+                slider.value = val;
+                if (callback) callback();
+            });
+        }
+
+        // ==========================================
+        // TAB 1: IMAGE TO PDF LOGIC
+        // ==========================================
+        let selectedFiles = []; 
+        let cachedPdfImages = []; 
+        let calculateTimeout;
+
+        syncInputs('qualitySliderImg', 'qualityInputImg', () => {
+            document.getElementById('sizeEstimatePdf').innerText = "Calculating...";
+            triggerSizeCalculation();
+        });
+
+        async function handleImgFiles(event) { await addImgFiles(Array.from(event.target.files)); event.target.value = ''; }
+        const dropZoneImg = document.getElementById('dropZoneImg');
+        dropZoneImg.addEventListener('dragover', (e) => { e.preventDefault(); dropZoneImg.classList.add('dragover'); });
+        dropZoneImg.addEventListener('dragleave', (e) => { e.preventDefault(); dropZoneImg.classList.remove('dragover'); });
+        dropZoneImg.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            dropZoneImg.classList.remove('dragover');
+            await addImgFiles(Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')));
+        });
+
+        const loadImage = (url) => new Promise((resolve, reject) => {
+            const img = new Image(); img.onload = () => resolve(img); img.onerror = reject; img.src = url;
+        });
+
+        async function addImgFiles(files) {
+            const promises = files.map(async file => {
+                const url = URL.createObjectURL(file);
+                return { file, url, imgObj: await loadImage(url) };
+            });
+            selectedFiles = selectedFiles.concat(await Promise.all(promises));
+            updateImgUI();
+            triggerSizeCalculation();
+        }
+
+        function removeImgFile(index) {
+            URL.revokeObjectURL(selectedFiles[index].url);
+            selectedFiles.splice(index, 1);
+            updateImgUI();
+            triggerSizeCalculation();
+        }
+
+        function updateImgUI() {
+            const grid = document.getElementById('previewGridImg');
+            const settings = document.getElementById('settingsImg');
+            const btn = document.getElementById('generatePdfBtn');
+            grid.innerHTML = '';
+            
+            if (selectedFiles.length > 0) {
+                grid.style.display = 'grid';
+                settings.style.display = 'flex';
+                btn.disabled = false;
+                selectedFiles.forEach((item, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'preview-item';
+                    div.innerHTML = `<img src="${item.url}"><div class="order-badge">${index + 1}</div><button class="remove-btn" onclick="event.stopPropagation(); removeImgFile(${index})">&times;</button>`;
+                    grid.appendChild(div);
+                });
+            } else {
+                grid.style.display = 'none';
+                settings.style.display = 'none';
+                btn.disabled = true;
+            }
+        }
+
+        function triggerSizeCalculation() {
+            clearTimeout(calculateTimeout);
+            calculateTimeout = setTimeout(calculateEstimatedSize, 200);
+        }
+
+        function getCompressedImageData(img, quality) {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width; canvas.height = img.height;
+            canvas.getContext('2d').drawImage(img, 0, 0);
+            return canvas.toDataURL('image/jpeg', quality);
+        }
+
+        async function calculateEstimatedSize() {
+            if (!selectedFiles.length) return;
+            const quality = parseInt(document.getElementById('qualitySliderImg').value) / 100;
+            let totalBytes = 2048; 
+            cachedPdfImages = []; 
+
+            for (let item of selectedFiles) {
+                const dataUrl = getCompressedImageData(item.imgObj, quality);
+                cachedPdfImages.push({ dataUrl, width: item.imgObj.width, height: item.imgObj.height });
+                const b64 = dataUrl.split(',')[1];
+                if (b64) totalBytes += Math.round(b64.length * 0.75);
+                totalBytes += 1500; 
+            }
+            const k = 1024, i = Math.floor(Math.log(totalBytes) / Math.log(k));
+            document.getElementById('sizeEstimatePdf').innerText = parseFloat((totalBytes / Math.pow(k, i)).toFixed(2)) + ' ' + ['B', 'KB', 'MB'][i];
+        }
+
+        async function generatePDF() {
+            if (!selectedFiles.length || !cachedPdfImages.length) return;
+            const btn = document.getElementById('generatePdfBtn');
+            const orig = btn.innerText;
+            btn.innerText = 'Saving...'; btn.disabled = true;
+
+            setTimeout(() => {
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF({ orientation: 'portrait', unit: 'px', format: 'a4' });
+                    const pW = doc.internal.pageSize.getWidth(), pH = doc.internal.pageSize.getHeight();
+
+                    cachedPdfImages.forEach((img, i) => {
+                        let fW = pW, fH = pH;
+                        if ((img.width / img.height) > (pW / pH)) fH = pW / (img.width / img.height);
+                        else fW = pH * (img.width / img.height);
+
+                        if (i > 0) doc.addPage();
+                        doc.addImage(img.dataUrl, 'JPEG', (pW - fW) / 2, (pH - fH) / 2, fW, fH);
+                    });
+
+                    let fName = document.getElementById('filenamePdf').value.trim() || 'Document';
+                    doc.save(fName.endsWith('.pdf') ? fName : fName + '.pdf');
+                } catch (e) { alert("Error generating PDF."); } 
+                finally { btn.innerText = orig; btn.disabled = false; }
+            }, 50);
+        }
+
+        // ==========================================
+        // TAB 2: PDF TO PNG LOGIC
+        // ==========================================
+        let currentPdfData = null;
+        let selectedPdfPages = new Set();
+        syncInputs('qualitySliderPdf', 'qualityInputPdf', null);
+
+        const dropZonePdf = document.getElementById('dropZonePdf');
+        dropZonePdf.addEventListener('dragover', (e) => { e.preventDefault(); dropZonePdf.classList.add('dragover'); });
+        dropZonePdf.addEventListener('dragleave', (e) => { e.preventDefault(); dropZonePdf.classList.remove('dragover'); });
+        dropZonePdf.addEventListener('drop', (e) => {
+            e.preventDefault(); dropZonePdf.classList.remove('dragover');
+            const file = Array.from(e.dataTransfer.files).find(f => f.type === 'application/pdf');
+            if(file) processSelectedPdf(file);
+        });
+
+        function handlePdfFile(e) {
+            if(e.target.files[0]) processSelectedPdf(e.target.files[0]);
+            e.target.value = '';
+        }
+
+        async function processSelectedPdf(file) {
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+                currentPdfData = { file, pdf, numPages: pdf.numPages };
+                selectedPdfPages = new Set(Array.from({length: pdf.numPages}, (_, i) => i + 1));
+
+                document.getElementById('pdfFileName').innerText = file.name;
+                document.getElementById('pdfTotalPages').innerText = pdf.numPages;
+                document.getElementById('selectedPdfData').style.display = 'flex';
+                document.getElementById('settingsPdf').style.display = 'flex';
+                document.getElementById('generatePngBtn').disabled = false;
+                document.getElementById('pageRangeInput').value = '';
+
+                await renderPdfPageGrid();
+                updateSelectionSummary();
+            } catch (err) {
+                alert("Failed to parse PDF file.");
+            }
+        }
+
+        function removePdf() {
+            currentPdfData = null;
+            selectedPdfPages = new Set();
+            document.getElementById('selectedPdfData').style.display = 'none';
+            document.getElementById('settingsPdf').style.display = 'none';
+            document.getElementById('generatePngBtn').disabled = true;
+            document.getElementById('pageRangeInput').value = '';
+            document.getElementById('pdfPageGrid').innerHTML = '';
+        }
+
+        // Renders a thumbnail for every page so the user can view and tap to select pages
+        async function renderPdfPageGrid() {
+            if (!currentPdfData) return;
+            const { pdf, numPages } = currentPdfData;
+            const grid = document.getElementById('pdfPageGrid');
+            grid.innerHTML = '';
+
+            for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+                const thumb = document.createElement('div');
+                thumb.className = 'page-thumb' + (selectedPdfPages.has(pageNum) ? ' selected' : '');
+                thumb.id = `pageThumb-${pageNum}`;
+                thumb.onclick = () => togglePageSelection(pageNum);
+                thumb.innerHTML = `<div class="page-thumb-loading">â€¦</div><span class="page-thumb-number">${pageNum}</span><span class="page-thumb-check">âœ“</span>`;
+                grid.appendChild(thumb);
+            }
+
+            // Render thumbnails progressively so the grid appears quickly
+            for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+                try {
+                    const page = await pdf.getPage(pageNum);
+                    const viewport = page.getViewport({ scale: 0.3 });
+                    const canvas = document.createElement('canvas');
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+                    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+
+                    const thumb = document.getElementById(`pageThumb-${pageNum}`);
+                    if (thumb) {
+                        const loading = thumb.querySelector('.page-thumb-loading');
+                        if (loading) loading.remove();
+                        const img = document.createElement('img');
+                        img.src = canvas.toDataURL('image/png');
+                        thumb.prepend(img);
+                    }
+                } catch (e) {
+                    console.error(`Failed to render thumbnail for page ${pageNum}`, e);
+                }
+            }
+        }
+
+        function togglePageSelection(pageNum) {
+            if (selectedPdfPages.has(pageNum)) {
+                selectedPdfPages.delete(pageNum);
+            } else {
+                selectedPdfPages.add(pageNum);
+            }
+            document.getElementById(`pageThumb-${pageNum}`).classList.toggle('selected');
+            syncRangeInputFromSelection();
+        }
+
+        function selectAllPages() {
+            if (!currentPdfData) return;
+            selectedPdfPages = new Set(Array.from({length: currentPdfData.numPages}, (_, i) => i + 1));
+            document.querySelectorAll('.page-thumb').forEach(el => el.classList.add('selected'));
+            syncRangeInputFromSelection();
+        }
+
+        function clearAllPages() {
+            selectedPdfPages = new Set();
+            document.querySelectorAll('.page-thumb').forEach(el => el.classList.remove('selected'));
+            syncRangeInputFromSelection();
+        }
+
+        // Converts the selected page Set into a compact "1-3,5,7-9" style range string
+        function formatPageRange(pages, maxPages) {
+            const sorted = Array.from(pages).sort((a, b) => a - b);
+            if (sorted.length === 0 || sorted.length === maxPages) return '';
+
+            const parts = [];
+            let start = sorted[0], end = sorted[0];
+            for (let i = 1; i <= sorted.length; i++) {
+                if (sorted[i] === end + 1) {
+                    end = sorted[i];
+                } else {
+                    parts.push(start === end ? `${start}` : `${start}-${end}`);
+                    start = end = sorted[i];
+                }
+            }
+            return parts.join(', ');
+        }
+
+        function updateSelectionSummary() {
+            if (!currentPdfData) return;
+            const count = selectedPdfPages.size;
+            document.getElementById('pageSelectionSummary').innerText =
+                `${count} of ${currentPdfData.numPages} page${currentPdfData.numPages === 1 ? '' : 's'} selected`;
+            document.getElementById('generatePngBtn').disabled = count === 0;
+        }
+
+        function syncRangeInputFromSelection() {
+            if (!currentPdfData) return;
+            document.getElementById('pageRangeInput').value = formatPageRange(selectedPdfPages, currentPdfData.numPages);
+            updateSelectionSummary();
+        }
+
+        // Keeps the visual grid in sync when the user types a manual page range
+        document.getElementById('pageRangeInput').addEventListener('input', (e) => {
+            if (!currentPdfData) return;
+            const parsed = e.target.value.trim() === ''
+                ? Array.from({length: currentPdfData.numPages}, (_, i) => i + 1)
+                : parsePageRange(e.target.value, currentPdfData.numPages);
+            selectedPdfPages = new Set(parsed);
+            document.querySelectorAll('.page-thumb').forEach(el => {
+                const pageNum = parseInt(el.id.replace('pageThumb-', ''));
+                el.classList.toggle('selected', selectedPdfPages.has(pageNum));
+            });
+            updateSelectionSummary();
+        });
+
+        function parsePageRange(rangeStr, maxPages) {
+            if (!rangeStr.trim()) return Array.from({length: maxPages}, (_, i) => i + 1);
+            const pages = new Set();
+            rangeStr.split(',').forEach(part => {
+                part = part.trim();
+                if (part.includes('-')) {
+                    const [start, end] = part.split('-').map(Number);
+                    if (start && end && start <= end) {
+                        for (let i = Math.max(1, start); i <= Math.min(end, maxPages); i++) pages.add(i);
+                    }
+                } else {
+                    const num = Number(part);
+                    if (num && num >= 1 && num <= maxPages) pages.add(num);
+                }
+            });
+            return Array.from(pages).sort((a, b) => a - b);
+        }
+
+        async function generatePNGs() {
+            if (!currentPdfData) return;
+            const btn = document.getElementById('generatePngBtn');
+            btn.innerText = 'Rendering Pages...';
+            btn.disabled = true;
+
+            try {
+                const { pdf, file } = currentPdfData;
+                const scale = parseInt(document.getElementById('qualitySliderPdf').value) / 100; // 1.0 to 5.0
+                const pagesToConvert = Array.from(selectedPdfPages).sort((a, b) => a - b);
+
+                if (pagesToConvert.length === 0) {
+                    alert("Select at least one page to download.");
+                    return;
+                }
+
+                let baseName = file.name.replace(/\.pdf$/i, '');
+
+                for (let i = 0; i < pagesToConvert.length; i++) {
+                    const pageNum = pagesToConvert[i];
+                    btn.innerText = `Processing ${i + 1} of ${pagesToConvert.length}...`;
+                    
+                    const page = await pdf.getPage(pageNum);
+                    const viewport = page.getViewport({ scale: scale });
+                    
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+                    
+                    // Direct Download Process
+                    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `${baseName}_Page_${pageNum}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(link.href);
+
+                    // Minor delay to prevent browser from blocking concurrent downloads
+                    if (i < pagesToConvert.length - 1) {
+                        await new Promise(r => setTimeout(r, 400));
+                    }
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Error extracting images from PDF.");
+            } finally {
+                btn.innerText = 'Download Selected Pages';
+                btn.disabled = pagesToConvertIsEmpty();
+            }
+        }
+
+        function pagesToConvertIsEmpty() {
+            return selectedPdfPages.size === 0;
+        }
+    </script>
+</body>
+</html>
